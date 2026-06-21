@@ -1,8 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// 饼饼的小窝 - 数据库 schema
 
 generator client {
   provider = "prisma-client-js"
@@ -13,20 +9,104 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
+// 猫咪档案（单条，固定 id）
+model Cat {
+  id        String   @id @default("default")
+  name      String   @default("饼饼")
+  breed     String?
+  gender    String?
+  birthday  String?
+  neutered  Boolean  @default(true)
+  bio       String?
+  motto     String?
+  avatar    String?
+  traits    String   @default("[]") // JSON array of strings
+  color     String? // 主色调描述
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model Post {
+// 成长日记
+model Diary {
   id        String   @id @default(cuid())
+  date      DateTime
   title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
+  content   String
+  mood      String? // happy/sleepy/naughty/cute/grumpy
+  imageUrl  String?
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+}
+
+// 体重记录
+model WeightRecord {
+  id        String   @id @default(cuid())
+  date      DateTime
+  weight    Float // kg
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+// 健康记录（疫苗/驱虫/体检）
+model HealthRecord {
+  id          String   @id @default(cuid())
+  date        DateTime
+  type        String // vaccine/deworm/checkup
+  title       String
+  description String?
+  nextDate    DateTime?
+  createdAt   DateTime @default(now())
+}
+
+// 相册
+model AlbumPhoto {
+  id        String   @id @default(cuid())
+  url       String
+  title     String?
+  tag       String? // sleep/eat/play/daze/naughty
+  source    String   @default("upload") // upload/ai
+  createdAt DateTime @default(now())
+}
+
+// 里程碑
+model Milestone {
+  id          String   @id @default(cuid())
+  date        DateTime
+  title       String
+  description String?
+  icon        String? // emoji
+  createdAt   DateTime @default(now())
+}
+
+// 留言板
+model Message {
+  id        String   @id @default(cuid())
+  name      String
+  content   String
+  avatar    String? // emoji
+  createdAt DateTime @default(now())
+}
+
+// AI 第一人称日记
+model AIDiary {
+  id        String   @id @default(cuid())
+  keywords  String
+  content   String
+  createdAt DateTime @default(now())
+}
+
+// AI 艺术照
+model AIArtwork {
+  id        String   @id @default(cuid())
+  prompt    String
+  url       String
+  style     String?
+  createdAt DateTime @default(now())
+}
+
+// 看图说话
+model ImageCaption {
+  id        String   @id @default(cuid())
+  imageUrl  String
+  caption   String
+  createdAt DateTime @default(now())
 }
