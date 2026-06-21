@@ -1,15 +1,14 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Plus, Loader2, Trash2, Images } from 'lucide-react'
+import { Plus, Loader2, Trash2, Images, X, CheckCircle2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
-import { ImageUpload } from './image-upload'
 import { useSelectedCatId } from './use-cat-id'
 import { TAG_MAP, type AlbumEntry } from '@/lib/types'
 import { SectionTitle, Loading } from './diary-section'
@@ -32,6 +31,13 @@ export function AlbumSection() {
   }, [catId])
 
   useEffect(() => { load() }, [load])
+
+  // 快捷传照片后自动刷新
+  useEffect(() => {
+    const handler = () => load()
+    window.addEventListener('album:changed', handler)
+    return () => window.removeEventListener('album:changed', handler)
+  }, [load])
 
   async function remove(id: string) {
     await fetch(`/api/album?id=${id}`, { method: 'DELETE' })
@@ -56,7 +62,7 @@ export function AlbumSection() {
           <button
             key={t}
             onClick={() => setFilter(t)}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${filter === t ? 'bg-amber-500 text-white' : 'bg-amber-50 text-stone-600 hover:bg-amber-100'}`}
+            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${filter === t ? 'bg-amber-500 text-white' : 'bg-amber-50 text-stone-600 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-stone-300'}`}
           >
             {t === 'all' ? '全部' : `${TAG_MAP[t].emoji} ${TAG_MAP[t].label}`}
           </button>
@@ -87,15 +93,8 @@ export function AlbumSection() {
                 {p.source === 'ai' && (
                   <span className="absolute right-2 top-2 rounded-full bg-purple-500/90 px-2 py-0.5 text-[10px] font-medium text-white">AI</span>
                 )}
-                <button
-                  onClick={() => setPreview(p)}
-                  className="absolute inset-0 cursor-zoom-in"
-                  aria-label="查看大图"
-                />
-                <button
-                  onClick={() => remove(p.id)}
-                  className="absolute right-2 top-8 rounded-full bg-white/90 p-1.5 text-rose-500 opacity-0 shadow transition-opacity group-hover:opacity-100"
-                >
+                <button onClick={() => setPreview(p)} className="absolute inset-0 cursor-zoom-in" aria-label="查看大图" />
+                <button onClick={() => remove(p.id)} className="absolute right-2 top-8 rounded-full bg-white/90 p-1.5 text-rose-500 opacity-0 shadow transition-opacity group-hover:opacity-100">
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>
@@ -116,64 +115,148 @@ export function AlbumSection() {
 
 function AddDialog({ catId, open, setOpen, onSaved }: { catId: string; open: boolean; setOpen: (v: boolean) => void; onSaved: () => void }) {
   const { toast } = useToast()
+  const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState({ url: '', title: '', tag: 'portrait' })
+  const [uploadedUrls, setUploadedUrls] = useState<string[]>([])
+  const [tag, setTag] = useState('portrait')
+  const [title, setTitle] = useState('')
+  // 上传结果（每张成功/失败）
+  const [uploadResults, setUploadResults] = useState<{ url: string; name: string; ok: boolean; error?: string }[]>([])
+
+  function reset() {
+    setUploadedUrls([])
+    setUploadResults([])
+    setTag('portrait')
+    setTitle('')
+  }
+
+  async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
+    setUploading(true)
+    setUploadResults([])
+    try {
+      const fd = new FormData()
+      files.forEach(f => fd.append('files', f))
+      const res = await fetch('/api/upload/batch', { method: 'POST', body: fd })
+      if (!res.ok) throw new Error('上传失败')
+      const data = await res.json()
+      setUploadResults(data.results)
+      const urls = data.results.filter((r: { ok: boolean; url: string }) => r.ok).map((r: { url: string }) => r.url)
+      setUploadedUrls(urls)
+      if (urls.length < files.length) {
+        toast({ title: `上传完成，${files.length - urls.length} 张失败`, variant: 'destructive' })
+      } else {
+        toast({ title: `${urls.length} 张已上传，确认后保存` })
+      }
+    } catch (err) {
+      toast({ title: '上传失败', description: (err as Error).message, variant: 'destructive' })
+    } finally {
+      setUploading(false)
+      e.target.value = ''
+    }
+  }
 
   async function save() {
-    if (!form.url) {
-      toast({ title: '请先上传图片', variant: 'destructive' })
+    if (uploadedUrls.length === 0) {
+      toast({ title: '请先上传照片', variant: 'destructive' })
       return
     }
     setSaving(true)
     try {
-      const res = await fetch('/api/album', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, catId }),
-      })
-      if (!res.ok) throw new Error('失败')
+      // 批量写入相册
+      await Promise.all(uploadedUrls.map(url =>
+        fetch('/api/album', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ catId, url, title: title || null, tag, source: 'upload' }),
+        })
+      ))
       setOpen(false)
-      setForm({ url: '', title: '', tag: 'portrait' })
+      reset()
       onSaved()
     } catch (e) {
-      toast({ title: '失败', description: (e as Error).message, variant: 'destructive' })
+      toast({ title: '保存失败', description: (e as Error).message, variant: 'destructive' })
     } finally {
       setSaving(false)
     }
   }
 
+  function removeUploaded(url: string) {
+    setUploadedUrls(urls => urls.filter(u => u !== url))
+    setUploadResults(rs => rs.filter(r => r.url !== url))
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset() }}>
       <DialogTrigger asChild>
         <Button size="sm" className="bg-amber-500 hover:bg-amber-600">
           <Plus className="mr-1 h-4 w-4" /> 添加照片
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader><DialogTitle>添加照片</DialogTitle></DialogHeader>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+        <DialogHeader><DialogTitle>添加照片到相册</DialogTitle></DialogHeader>
         <div className="grid gap-4 py-2">
-          <div className="flex items-center gap-3">
-            {form.url ? (
-              <img loading="lazy" src={form.url} alt="" className="h-20 w-20 rounded-lg object-cover" />
-            ) : (
-              <div className="flex h-20 w-20 items-center justify-center rounded-lg border-2 border-dashed border-amber-200 text-2xl">📷</div>
-            )}
-            <ImageUpload onUploaded={(url) => setForm(f => ({ ...f, url }))} label="上传照片" />
+          {/* 上传区 */}
+          <div>
+            <Label className="mb-1.5 block text-xs text-stone-500 dark:text-stone-400">选择照片（可多选，最多 20 张）</Label>
+            <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-amber-200 bg-amber-50/40 px-4 py-8 text-center transition-colors hover:border-amber-400 hover:bg-amber-50 dark:border-amber-900/40 dark:hover:bg-amber-900/10">
+              {uploading ? (
+                <><Loader2 className="h-8 w-8 animate-spin text-amber-400" /><span className="text-sm text-stone-500">上传中…</span></>
+              ) : (
+                <><Images className="h-8 w-8 text-amber-400" /><span className="text-sm font-medium text-stone-600 dark:text-stone-300">点击选择照片</span><span className="text-xs text-stone-400">支持 PNG / JPEG / WebP / GIF，单张 ≤ 8MB</span></>
+              )}
+              <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple className="hidden" onChange={handleFiles} />
+            </label>
           </div>
-          <Field label="标题（可选）"><Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="睡到模糊" /></Field>
-          <Field label="标签">
-            <select className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={form.tag} onChange={e => setForm(f => ({ ...f, tag: e.target.value }))}>
-              {Object.entries(TAG_MAP).map(([k, v]) => (
-                <option key={k} value={k}>{v.emoji} {v.label}</option>
-              ))}
-            </select>
-          </Field>
+
+          {/* 上传结果预览 */}
+          {uploadResults.length > 0 && (
+            <div>
+              <Label className="mb-1.5 block text-xs text-stone-500 dark:text-stone-400">已上传 {uploadedUrls.length} 张（点击 ✕ 移除）</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {uploadResults.map((r, i) => (
+                  <div key={i} className="group relative aspect-square overflow-hidden rounded-lg border border-stone-200 dark:border-stone-700">
+                    {r.ok ? (
+                      <>
+                        <img loading="lazy" src={r.url} alt={r.name} className="h-full w-full object-cover" />
+                        <span className="absolute left-1 top-1 rounded-full bg-emerald-500 p-0.5 text-white"><CheckCircle2 className="h-3 w-3" /></span>
+                        <button onClick={() => removeUploaded(r.url)} className="absolute right-1 top-1 rounded-full bg-white/90 p-0.5 text-rose-500 opacity-0 transition-opacity group-hover:opacity-100">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </>
+                    ) : (
+                      <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-rose-50 p-1 text-center dark:bg-rose-900/20">
+                        <AlertCircle className="h-5 w-5 text-rose-400" />
+                        <span className="line-clamp-2 text-[10px] text-rose-500">{r.error}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 统一标签和标题 */}
+          {uploadedUrls.length > 0 && (
+            <>
+              <Field label="统一标题（可选，留空则无标题）">
+                <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="今天的萌照合集" />
+              </Field>
+              <Field label="统一标签">
+                <select className="h-10 w-full rounded-md border border-input bg-transparent px-3 text-base" value={tag} onChange={e => setTag(e.target.value)}>
+                  {Object.entries(TAG_MAP).map(([k, v]) => <option key={k} value={k}>{v.emoji} {v.label}</option>)}
+                </select>
+              </Field>
+            </>
+          )}
+
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => { setOpen(false); reset() }}>取消</Button>
+            <Button onClick={save} disabled={saving || uploadedUrls.length === 0} className="flex-1 bg-amber-500 hover:bg-amber-600">
+              {saving ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> 保存中</> : `保存 ${uploadedUrls.length} 张`}
+            </Button>
+          </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>取消</Button>
-          <Button onClick={save} disabled={saving} className="bg-amber-500 hover:bg-amber-600">
-            {saving && <Loader2 className="mr-1 h-4 w-4 animate-spin" />} 保存
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -182,7 +265,7 @@ function AddDialog({ catId, open, setOpen, onSaved }: { catId: string; open: boo
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="grid gap-1.5">
-      <Label className="text-xs text-stone-500">{label}</Label>
+      <Label className="text-xs text-stone-500 dark:text-stone-400">{label}</Label>
       {children}
     </div>
   )

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Plus, Loader2, Trash2, Scale } from 'lucide-react'
+import { Plus, Loader2, Trash2, Scale, Zap } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -12,12 +12,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { useSelectedCatId } from './use-cat-id'
+import { useCatStore } from '@/lib/cat-store'
 import { fmtDate, type WeightEntry } from '@/lib/types'
 import { SectionTitle, Loading, Empty } from './diary-section'
 
 export function WeightSection() {
   const { toast } = useToast()
   const catId = useSelectedCatId()
+  const openQuickAction = useCatStore(s => s.openQuickAction)
   const [list, setList] = useState<WeightEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
@@ -31,6 +33,13 @@ export function WeightSection() {
   }, [catId])
 
   useEffect(() => { load() }, [load])
+
+  // 快捷记录保存后刷新
+  useEffect(() => {
+    const handler = () => load()
+    window.addEventListener('weight:changed', handler)
+    return () => window.removeEventListener('weight:changed', handler)
+  }, [load])
 
   async function remove(id: string) {
     await fetch(`/api/weight?id=${id}`, { method: 'DELETE' })
@@ -54,10 +63,19 @@ export function WeightSection() {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="flex items-center gap-2 text-lg font-bold text-stone-800">
+        <h3 className="flex items-center gap-2 text-lg font-bold text-stone-800 dark:text-stone-100">
           <Scale className="h-5 w-5 text-amber-500" /> 体重曲线
         </h3>
-        <AddDialog catId={catId} open={open} setOpen={setOpen} onSaved={() => { load(); toast({ title: '已记录' }) }} />
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            className="bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600"
+            onClick={() => catId && openQuickAction({ catId, type: 'weight' })}
+          >
+            <Zap className="mr-1 h-4 w-4" /> 今日称重
+          </Button>
+          <AddDialog catId={catId} open={open} setOpen={setOpen} onSaved={() => { load(); toast({ title: '已记录' }) }} />
+        </div>
       </div>
 
       {loading ? (

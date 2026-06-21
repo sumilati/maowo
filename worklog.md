@@ -70,3 +70,36 @@ Stage Summary:
 - 底部安全区适配、图片懒加载、数字键盘优化
 - 桌面端体验保持不变（md 断点切换）
 - 产出：mobile-tab-bar.tsx、quick-action-sheet.tsx，更新 site-nav/cat-site/cat-store/dashboard-view 及所有 img 懒加载
+
+---
+Task ID: high-priority-features
+Agent: Z.ai Code (main)
+Task: 三个高优功能：PWA安装 + 相册批量上传 + 体重/健康快捷入口
+
+Work Log:
+PWA：
+- 生成 icon-192.png / icon-512.png（猫爪主题）
+- 新建 public/manifest.json（standalone, theme_color #f59e0b, 4 icons 含 maskable）
+- 新建 public/sw.js Service Worker：预缓存核心资源，导航请求网络优先回退缓存，uploads 图片缓存优先，API 不缓存
+- 新建 src/components/sw-register.tsx（仅生产环境注册 SW）
+- 更新 layout.tsx：加 manifest link、apple-touch-icon、appleWebApp 配置、viewport(themeColor/viewportFit=cover 禁缩放)、lang=zh-CN，注册 SW
+
+相册批量上传：
+- 新建 /api/upload/batch 多文件上传接口（最多20张，逐个校验类型/大小，返回每张结果）
+- 重写 AlbumSection 的 AddDialog：支持多选上传，上传后网格预览（成功✓/失败✗），可逐个移除，统一设置标签和标题，批量保存
+- 改造 QuickActionSheet 的 PhotoForm：从单图改为批量多选上传，网格预览，可移除
+
+体重/健康快捷入口：
+- WeightSection 标题旁加渐变色「今日称重」按钮，点击调 openQuickAction({type:'weight'})
+- HealthSection 标题旁加「快速记录」按钮，点击调 openQuickAction({type:'health'})
+- WeightForm 保存后派发 weight:changed 事件，WeightSection 监听自动刷新
+- HealthForm 保存后派发 health:changed 事件，HealthSection 监听自动刷新
+- PhotoForm 保存后派发 album:changed 事件，AlbumSection 监听自动刷新
+
+Stage Summary:
+- PWA 可添加到主屏幕，独立全屏，离线可看缓存内容（生产环境注册 SW）
+- 相册支持一次多选上传最多20张，手机批量传图友好
+- 体重/健康页有醒目快捷按钮，一键弹快捷表单，保存后自动刷新数据
+- 三个模块用 CustomEvent 跨组件通信实现自动刷新
+- lint 通过；Agent Browser 验证：manifest/sw/icon 都 200、快捷称重保存后曲线自动更新(4.3kg)、批量上传 API 2张成功、相册数 5→7、仪表盘卡片统计同步
+- 产出：manifest.json、sw.js、sw-register.tsx、/api/upload/batch、更新 layout/album-section/weight-section/health-section/quick-action-sheet

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Plus, Loader2, Trash2, Stethoscope, BellRing, CalendarClock } from 'lucide-react'
+import { Plus, Loader2, Trash2, Stethoscope, BellRing, CalendarClock, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -13,12 +13,14 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { useSelectedCatId } from './use-cat-id'
+import { useCatStore } from '@/lib/cat-store'
 import { HEALTH_TYPE_MAP, fmtDate, type HealthEntry } from '@/lib/types'
 import { Loading, Empty } from './diary-section'
 
 export function HealthSection() {
   const { toast } = useToast()
   const catId = useSelectedCatId()
+  const openQuickAction = useCatStore(s => s.openQuickAction)
   const [list, setList] = useState<HealthEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
@@ -32,6 +34,12 @@ export function HealthSection() {
   }, [catId])
 
   useEffect(() => { load() }, [load])
+
+  useEffect(() => {
+    const handler = () => load()
+    window.addEventListener('health:changed', handler)
+    return () => window.removeEventListener('health:changed', handler)
+  }, [load])
 
   async function remove(id: string) {
     await fetch(`/api/health?id=${id}`, { method: 'DELETE' })
@@ -51,10 +59,19 @@ export function HealthSection() {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="flex items-center gap-2 text-lg font-bold text-stone-800">
+        <h3 className="flex items-center gap-2 text-lg font-bold text-stone-800 dark:text-stone-100">
           <Stethoscope className="h-5 w-5 text-amber-500" /> 健康档案
         </h3>
-        <AddDialog catId={catId} open={open} setOpen={setOpen} onSaved={() => { load(); toast({ title: '已记录' }) }} />
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            className="bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600"
+            onClick={() => catId && openQuickAction({ catId, type: 'health' })}
+          >
+            <Zap className="mr-1 h-4 w-4" /> 快速记录
+          </Button>
+          <AddDialog catId={catId} open={open} setOpen={setOpen} onSaved={() => { load(); toast({ title: '已记录' }) }} />
+        </div>
       </div>
 
       {loading ? (
