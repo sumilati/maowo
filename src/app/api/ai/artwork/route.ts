@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { generateImageBase64 } from '@/lib/zai'
+import { ownCat } from '@/lib/own-cat'
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -15,40 +16,22 @@ const STYLE_PRESETS: Record<string, string> = {
   watercolor: 'soft watercolor painting style, pastel colors, dreamy',
 }
 
-// 根据品种/花色生成主体描述
 function buildSubject(cat: { color: string | null; breed: string | null; name: string }): string {
   const colorDesc = cat.color || 'tabby'
-  const breedDesc = cat.breed || 'cat'
-  // 美短/银虎斑 -> silver tabby American Shorthair
   const breedMap: Record<string, string> = {
-    '美国短毛猫': 'American Shorthair cat',
-    '美短': 'American Shorthair cat',
-    '英国短毛猫': 'British Shorthair cat',
-    '英短': 'British Shorthair cat',
-    '布偶猫': 'Ragdoll cat',
-    '布偶': 'Ragdoll cat',
-    '橘猫': 'orange tabby cat',
-    '狸花猫': 'Chinese Li Hua tabby cat',
-    '狸花': 'Chinese Li Hua tabby cat',
-    '暹罗猫': 'Siamese cat',
-    '暹罗': 'Siamese cat',
-    '波斯猫': 'Persian cat',
-    '波斯': 'Persian cat',
-    '缅因猫': 'Maine Coon cat',
-    '缅因': 'Maine Coon cat',
+    '美国短毛猫': 'American Shorthair cat', '美短': 'American Shorthair cat',
+    '英国短毛猫': 'British Shorthair cat', '英短': 'British Shorthair cat',
+    '布偶猫': 'Ragdoll cat', '布偶': 'Ragdoll cat',
+    '橘猫': 'orange tabby cat', '狸花猫': 'Chinese Li Hua tabby cat', '狸花': 'Chinese Li Hua tabby cat',
+    '暹罗猫': 'Siamese cat', '暹罗': 'Siamese cat',
+    '波斯猫': 'Persian cat', '波斯': 'Persian cat',
+    '缅因猫': 'Maine Coon cat', '缅因': 'Maine Coon cat',
   }
-  const breedEn = breedMap[breedDesc] || breedMap[cat.breed || ''] || 'cat'
+  const breedEn = breedMap[cat.breed || ''] || 'cat'
   const colorMap: Record<string, string> = {
-    '银虎斑': 'silver tabby',
-    '橘白': 'orange and white',
-    '橘': 'orange',
-    '纯白': 'pure white',
-    '纯黑': 'black',
-    '黑白': 'black and white',
-    '三花': 'calico',
-    '玳瑁': 'tortoiseshell',
-    '重点色': 'colorpoint',
-    '蓝': 'blue gray',
+    '银虎斑': 'silver tabby', '橘白': 'orange and white', '橘': 'orange',
+    '纯白': 'pure white', '纯黑': 'black', '黑白': 'black and white',
+    '三花': 'calico', '玳瑁': 'tortoiseshell', '重点色': 'colorpoint', '蓝': 'blue gray',
   }
   const colorEn = colorMap[colorDesc] || colorDesc
   return `A cute ${colorEn} ${breedEn} named ${cat.name}`
@@ -62,6 +45,8 @@ export async function POST(req: NextRequest) {
     const style: string = body.style || 'oil'
     if (!catId) return NextResponse.json({ error: '缺少 catId' }, { status: 400 })
     if (!userPrompt) return NextResponse.json({ error: '请描述你想要的画面' }, { status: 400 })
+    const ok = await ownCat(catId)
+    if (ok instanceof Response) return ok
 
     const cat = await db.cat.findUnique({ where: { id: catId } })
     if (!cat) return NextResponse.json({ error: '猫咪不存在' }, { status: 404 })
@@ -69,22 +54,16 @@ export async function POST(req: NextRequest) {
     const subject = buildSubject(cat)
     const styleSuffix = STYLE_PRESETS[style] || STYLE_PRESETS.oil
     const fullPrompt = `${subject}, ${userPrompt}, ${styleSuffix}, high quality, detailed, adorable, centered composition`
-
     const base64 = await generateImageBase64(fullPrompt, '1024x1024')
 
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
     if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true })
     const filename = `artwork_${Date.now()}.png`
     fs.writeFileSync(path.join(uploadsDir, filename), Buffer.from(base64, 'base64'))
-    const url = `/uploads/${filename}`
+    const url = `/api/uploads/${filename}`
 
-    const saved = await db.aIArtwork.create({
-      data: { catId, prompt: userPrompt, url, style },
-    })
-    // 同时加入相册
-    await db.albumPhoto.create({
-      data: { catId, url, title: userPrompt.slice(0, 20), tag: 'portrait', source: 'ai' },
-    })
+    const saved = await db.aIArtwork.create({ data: { catId, prompt: userPrompt, url, style } })
+    await db.albumPhoto.create({ data: { catId, url, title: userPrompt.slice(0, 20), tag: 'portrait', source: 'ai' } })
 
     return NextResponse.json({ id: saved.id, url, prompt: userPrompt, style })
   } catch (e) {
@@ -95,8 +74,10 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const catId = req.nextUrl.searchParams.get('catId')
-    const where = catId ? { catId } : {}
-    const list = await db.aIArtwork.findMany({ where, orderBy: { createdAt: 'desc' }, take: 30 })
+    if (!catId) return NextResponse.json([])
+    const ok = await ownCat(catId)
+    if (ok instanceof Response) return ok
+    const list = await db.aIArtwork.findMany({ where: { catId }, orderBy: { createdAt: 'desc' }, take: 30 })
     return NextResponse.json(list)
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 })

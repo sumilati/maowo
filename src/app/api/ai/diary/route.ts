@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { llmChat } from '@/lib/zai'
+import { ownCat } from '@/lib/own-cat'
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,6 +11,8 @@ export async function POST(req: NextRequest) {
     const mood: string = body.mood || '傲娇又可爱'
     if (!catId) return NextResponse.json({ error: '缺少 catId' }, { status: 400 })
     if (!keywords) return NextResponse.json({ error: '请输入今天发生的关键词' }, { status: 400 })
+    const ok = await ownCat(catId)
+    if (ok instanceof Response) return ok
 
     const cat = await db.cat.findUnique({ where: { id: catId } })
     if (!cat) return NextResponse.json({ error: '猫咪不存在' }, { status: 404 })
@@ -25,10 +28,7 @@ export async function POST(req: NextRequest) {
 
     const content = await llmChat(systemPrompt, `今天发生的事（关键词）：${keywords}\n\n请用我的口吻写一篇今日日记。`)
 
-    const saved = await db.aIDiary.create({
-      data: { catId, keywords, content },
-    })
-
+    const saved = await db.aIDiary.create({ data: { catId, keywords, content } })
     return NextResponse.json({ id: saved.id, content, keywords })
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 })
@@ -38,8 +38,10 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const catId = req.nextUrl.searchParams.get('catId')
-    const where = catId ? { catId } : {}
-    const list = await db.aIDiary.findMany({ where, orderBy: { createdAt: 'desc' }, take: 20 })
+    if (!catId) return NextResponse.json([])
+    const ok = await ownCat(catId)
+    if (ok instanceof Response) return ok
+    const list = await db.aIDiary.findMany({ where: { catId }, orderBy: { createdAt: 'desc' }, take: 20 })
     return NextResponse.json(list)
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 })

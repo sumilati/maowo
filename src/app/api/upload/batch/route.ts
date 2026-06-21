@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import fs from 'node:fs'
 import path from 'node:path'
+import { requireUserId } from '@/lib/session'
 
 const ALLOWED = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
 const MAX_SIZE = 8 * 1024 * 1024
 
 export async function POST(req: NextRequest) {
+  const uid = await requireUserId()
+  if (uid instanceof Response) return uid
   try {
     const formData = await req.formData()
     const files = formData.getAll('files').filter(f => f instanceof File) as File[]
@@ -38,7 +41,7 @@ export async function POST(req: NextRequest) {
         const filename = `upload_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`
         const buffer = Buffer.from(await file.arrayBuffer())
         fs.writeFileSync(path.join(uploadsDir, filename), buffer)
-        results.push({ url: `/uploads/${filename}`, name: file.name, ok: true })
+        results.push({ url: `/api/uploads/${filename}`, name: file.name, ok: true })
       } catch (e) {
         results.push({ url: '', name: file.name, ok: false, error: (e as Error).message })
       }

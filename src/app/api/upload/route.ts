@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import fs from 'node:fs'
 import path from 'node:path'
+import { requireUserId } from '@/lib/session'
 
 export async function POST(req: NextRequest) {
+  const uid = await requireUserId()
+  if (uid instanceof Response) return uid
   try {
     const formData = await req.formData()
     const file = formData.get('file') as File | null
@@ -10,13 +13,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '未收到文件' }, { status: 400 })
     }
 
-    // 限制类型
     const allowed = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
     if (!allowed.includes(file.type)) {
       return NextResponse.json({ error: '仅支持 png/jpeg/webp/gif 图片' }, { status: 400 })
     }
 
-    // 限制大小 8MB
     if (file.size > 8 * 1024 * 1024) {
       return NextResponse.json({ error: '图片不能超过 8MB' }, { status: 400 })
     }
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer())
     fs.writeFileSync(filepath, buffer)
 
-    return NextResponse.json({ url: `/uploads/${filename}` })
+    return NextResponse.json({ url: `/api/uploads/${filename}` })
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 })
   }

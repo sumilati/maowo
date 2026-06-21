@@ -103,3 +103,41 @@ Stage Summary:
 - 三个模块用 CustomEvent 跨组件通信实现自动刷新
 - lint 通过；Agent Browser 验证：manifest/sw/icon 都 200、快捷称重保存后曲线自动更新(4.3kg)、批量上传 API 2张成功、相册数 5→7、仪表盘卡片统计同步
 - 产出：manifest.json、sw.js、sw-register.tsx、/api/upload/batch、更新 layout/album-section/weight-section/health-section/quick-action-sheet
+
+---
+Task ID: auth-and-image-fix
+Agent: Z.ai Code (main)
+Task: 方案B账号系统(NextAuth) + 修复上传图片裂图 + 修复AI看图说话
+
+Work Log:
+图片裂图修复：
+- 根因：Next.js dev server 对 public/ 下新增文件有识别延迟，刚上传立即访问 404
+- 新建 /api/uploads/[...path] 动态 serve 上传文件（带缓存头），不受 public 静态缓存影响
+- upload、upload/batch、ai/artwork 返回的 URL 全部改为 /api/uploads/xxx.png
+
+AI 看图说话修复：
+- 根因：VLM 需要可访问的图片 URL，但 /uploads 拼成 localhost URL 外部 VLM 服务访问不到，返回 400
+- caption API 改为读取本地文件转 base64 data URL 传给 VLM，兼容 /api/uploads/ 和 /uploads/ 两种路径
+
+账号系统（方案B NextAuth）：
+- Prisma 加 User model，Cat 加 userId 关联，所有子资源通过 Cat 级联
+- 安装 bcryptjs，新建 src/lib/auth.ts (NextAuth Credentials + JWT + callbacks 注入 user.id)
+- 新建 /api/auth/[...nextauth] (handler) 和 /api/auth/register (注册+bcrypt哈希)
+- 新建 src/lib/session.ts (getUserId/requireUserId) 和 src/lib/own-cat.ts (校验猫归属)
+- 所有 API（cats/cats[id]/diary/weight/health/album/milestones/messages/dashboard/ai三个/upload两个）加 requireUserId + ownCat 校验，数据按 userId 隔离
+- 新建 /login 页面（登录/注册切换 tab，邮箱密码表单，渐变背景）
+- 新建 SessionProviderWrap 包裹 layout，UserMenu 组件（头像首字母+下拉登出）加到 SiteNav
+- page.tsx 改为服务端组件，getServerSession 未登录 redirect /login
+- seed 改为创建 demo 用户(demo@maowo.com/123456) + 小河关联到该用户，所有图片URL改 /api/uploads/
+- .env 加 NEXTAUTH_SECRET 和 NEXTAUTH_URL
+- 重启 dev server 加载新 Prisma Client
+
+Stage Summary:
+- 上传图片立即访问 200 不再裂图（改用动态 /api/uploads 路由）
+- AI 看图说话正常返回（base64 传 VLM）
+- AI 艺术照生成正常，图片立即可访问
+- 完整账号系统：注册/登录/登出，数据按用户隔离（demo 看到小河，test 用户看到0只）
+- 未登录所有 API 返回 401，访问 / 自动跳转 /login
+- 顶部显示用户头像菜单可登出
+- lint 通过；Agent Browser 验证：未登录跳login、demo登录进主页看到小河、相册5图全加载、看图说话返回独白、AI生图立即可访问
+- demo 账号: demo@maowo.com / 123456

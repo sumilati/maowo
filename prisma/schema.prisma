@@ -1,4 +1,4 @@
-// 猫窝 - 数据库 schema（多猫支持）
+// 猫窝 - 数据库 schema（多用户 + 多猫）
 
 generator client {
   provider = "prisma-client-js"
@@ -9,9 +9,23 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 猫咪档案（可有多只）
+// 用户
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  cats          Cat[]
+}
+
+// 猫咪档案（属于某用户）
 model Cat {
   id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
   breed     String?
   gender    String?
@@ -20,7 +34,7 @@ model Cat {
   bio       String?
   motto     String?
   avatar    String?
-  traits    String   @default("[]") // JSON array of strings
+  traits    String   @default("[]")
   color     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -36,7 +50,6 @@ model Cat {
   imageCaptions ImageCaption[]
 }
 
-// 成长日记
 model Diary {
   id        String   @id @default(cuid())
   catId     String
@@ -49,7 +62,6 @@ model Diary {
   createdAt DateTime @default(now())
 }
 
-// 体重记录
 model WeightRecord {
   id        String   @id @default(cuid())
   catId     String
@@ -60,7 +72,6 @@ model WeightRecord {
   createdAt DateTime @default(now())
 }
 
-// 健康记录（疫苗/驱虫/体检）
 model HealthRecord {
   id          String   @id @default(cuid())
   catId       String
@@ -73,7 +84,6 @@ model HealthRecord {
   createdAt   DateTime @default(now())
 }
 
-// 相册
 model AlbumPhoto {
   id        String   @id @default(cuid())
   catId     String
@@ -85,7 +95,6 @@ model AlbumPhoto {
   createdAt DateTime @default(now())
 }
 
-// 里程碑
 model Milestone {
   id          String   @id @default(cuid())
   catId       String
@@ -97,7 +106,6 @@ model Milestone {
   createdAt   DateTime @default(now())
 }
 
-// 留言板（每只猫独立的留言）
 model Message {
   id        String   @id @default(cuid())
   catId     String
@@ -108,7 +116,6 @@ model Message {
   createdAt DateTime @default(now())
 }
 
-// AI 第一人称日记
 model AIDiary {
   id        String   @id @default(cuid())
   catId     String
@@ -118,7 +125,6 @@ model AIDiary {
   createdAt DateTime @default(now())
 }
 
-// AI 艺术照
 model AIArtwork {
   id        String   @id @default(cuid())
   catId     String
@@ -129,7 +135,6 @@ model AIArtwork {
   createdAt DateTime @default(now())
 }
 
-// 看图说话
 model ImageCaption {
   id        String   @id @default(cuid())
   catId     String

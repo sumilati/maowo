@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ServiceWorkerRegister } from "@/components/sw-register";
+import { SessionProviderWrap } from "@/components/session-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -62,9 +63,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-          {children}
-          <Toaster />
-          <ServiceWorkerRegister />
+          <SessionProviderWrap>
+            {children}
+            <Toaster />
+            <ServiceWorkerRegister />
+          </SessionProviderWrap>
         </ThemeProvider>
       </body>
     </html>

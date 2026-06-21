@@ -2,6 +2,7 @@
 
 import { Cat } from 'lucide-react'
 import { ThemeToggle } from './theme-toggle'
+import { UserMenu } from './user-menu'
 
 const NAV_ITEMS = [
   { id: 'home', label: '小窝' },
@@ -40,6 +41,7 @@ export function SiteNav() {
         </nav>
         <div className="flex items-center gap-1">
           <ThemeToggle />
+          <UserMenu />
         </div>
       </div>
     </header>
