@@ -31,7 +31,7 @@ export function HeroSection() {
           <div className="relative shrink-0">
             <div className="absolute inset-0 rounded-full bg-amber-300/40 blur-xl" />
             {cat.avatar ? (
-              <img
+              <img loading="lazy"
                 src={cat.avatar}
                 alt={cat.name}
                 className="relative h-32 w-32 rounded-full border-4 border-white object-cover shadow-lg sm:h-40 sm:w-40"

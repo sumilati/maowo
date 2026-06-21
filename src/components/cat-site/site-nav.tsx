@@ -15,18 +15,19 @@ const NAV_ITEMS = [
 
 export function SiteNav() {
   return (
-    <header className="sticky top-0 z-50 border-b border-amber-100/80 bg-cream/80 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-amber-100/80 bg-cream/80 backdrop-blur-md dark:border-amber-900/30">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
         <a href="#home" className="flex shrink-0 items-center gap-2">
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-400 text-white shadow-sm">
             <Cat className="h-5 w-5" />
           </span>
           <div className="leading-tight">
-            <div className="text-base font-bold text-stone-800">猫窝</div>
-            <div className="text-[10px] text-stone-500">每只猫都有专属的小窝</div>
+            <div className="text-base font-bold text-stone-800 dark:text-stone-100">猫窝</div>
+            <div className="hidden text-[10px] text-stone-500 sm:block dark:text-stone-400">每只猫都有专属的小窝</div>
           </div>
         </a>
-        <nav className="flex items-center gap-1 overflow-x-auto scroll-hide">
+        {/* 桌面端文字导航 */}
+        <nav className="hidden items-center gap-1 overflow-x-auto scroll-hide md:flex">
           {NAV_ITEMS.map((item) => (
             <a
               key={item.id}
@@ -36,8 +37,10 @@ export function SiteNav() {
               {item.label}
             </a>
           ))}
-          <ThemeToggle />
         </nav>
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   )

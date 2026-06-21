@@ -83,7 +83,7 @@ export function DiarySection() {
                 <h3 className="mb-1 text-lg font-bold text-stone-800">{d.title}</h3>
                 <p className="whitespace-pre-wrap text-sm leading-relaxed text-stone-600">{d.content}</p>
                 {d.imageUrl && (
-                  <img src={d.imageUrl} alt={d.title} className="mt-3 max-h-64 rounded-xl object-cover shadow-sm" />
+                  <img loading="lazy" src={d.imageUrl} alt={d.title} className="mt-3 max-h-64 rounded-xl object-cover shadow-sm" />
                 )}
               </Card>
             )
@@ -151,7 +151,7 @@ function AddDialog({ catId, open, setOpen, onSaved }: { catId: string; open: boo
           <Field label="标题"><Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="今天发生了什么" /></Field>
           <Field label="内容"><Textarea rows={5} value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))} /></Field>
           <div className="flex items-center gap-3">
-            {form.imageUrl && <img src={form.imageUrl} alt="" className="h-14 w-14 rounded-lg object-cover" />}
+            {form.imageUrl && <img loading="lazy" src={form.imageUrl} alt="" className="h-14 w-14 rounded-lg object-cover" />}
             <ImageUpload onUploaded={(url) => setForm(f => ({ ...f, imageUrl: url }))} label="配图（可选）" />
           </div>
         </div>

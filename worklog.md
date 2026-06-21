@@ -45,3 +45,28 @@ Stage Summary:
 - 暗色模式完整可用
 - 提醒逻辑更合理
 - 产出：/api/dashboard、/api/ai/diary/[id]/convert、dashboard-view.tsx、theme-provider.tsx、theme-toggle.tsx，更新 cat-store/cat-site/diary-section/ai-play-section/health-section/site-nav/globals.css/layout
+
+---
+Task ID: mobile-optimization
+Agent: Z.ai Code (main)
+Task: 手机端为主场景的体验优化
+
+Work Log:
+- 新建 MobileTabBar 组件：手机端底部 4+1 Tab（首页/小窝/[中间凸起+快记]/相册/更多），md:hidden 仅手机显示
+- 中间+号按钮点击弹出 QuickMenu 底部菜单（写日记/记体重/健康记录/传照片），点击后打开对应快捷表单
+- 新建 QuickActionSheet：统一快捷记录弹窗，根据 type 渲染 DiaryForm/WeightForm/HealthForm/PhotoForm（各自独立组件避免 hooks 条件调用）
+- cat-store 加 quickAction 状态 + openQuickAction/closeQuickAction
+- 简化 SiteNav：桌面端保留文字导航(md:flex)，手机端只留 logo+主题切换，文字导航收进底部 Tab
+- cat-site 各视图 main 加 pb-28 md:pb-10 给底部 Tab 留空间，三个视图都挂载 MobileTabBar + QuickActionSheet
+- 数字输入框加 inputmode="decimal"（体重）优化手机键盘
+- 近期动态卡片加"点击查看 ›"提示
+- 所有 <img> 加 loading="lazy" 懒加载
+- 底部 Tab 栏用 pb-[env(safe-area-inset-bottom)] 适配 iOS home 条
+- lint 通过；Agent Browser 手机端验证：顶部简化、底部Tab、+号快捷菜单、记体重表单提交入库、Tab切换(首页↔小窝↔相册)、暗色模式Tab栏适配、footer不被遮挡
+
+Stage Summary:
+- 手机端从"顶部拥挤导航+无快捷操作"升级为"底部Tab导航+一键快记"，单手操作友好
+- 凸起+号按钮是核心记录入口，4 种记录类型一键直达
+- 底部安全区适配、图片懒加载、数字键盘优化
+- 桌面端体验保持不变（md 断点切换）
+- 产出：mobile-tab-bar.tsx、quick-action-sheet.tsx，更新 site-nav/cat-site/cat-store/dashboard-view 及所有 img 懒加载

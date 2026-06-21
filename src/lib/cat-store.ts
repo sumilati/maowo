@@ -8,19 +8,24 @@ interface CatStore {
   selectedCatId: string | null
   view: View
   loadingCats: boolean
+  // 快捷记录：打开某猫的快速记录弹窗
+  quickAction: { catId: string; type: 'diary' | 'weight' | 'health' | 'photo' } | null
   setCats: (cats: CatProfile[]) => void
   setLoadingCats: (v: boolean) => void
   selectCat: (id: string) => void
   goToDashboard: () => void
   upsertCat: (cat: CatProfile) => void
   removeCat: (id: string) => void
+  openQuickAction: (a: { catId: string; type: 'diary' | 'weight' | 'health' | 'photo' }) => void
+  closeQuickAction: () => void
 }
 
-export const useCatStore = create<CatStore>((set, get) => ({
+export const useCatStore = create<CatStore>((set) => ({
   cats: [],
   selectedCatId: null,
   view: 'dashboard',
   loadingCats: true,
+  quickAction: null,
   setCats: (cats) =>
     set((state) => ({
       cats,
@@ -48,6 +53,8 @@ export const useCatStore = create<CatStore>((set, get) => ({
         state.selectedCatId === id ? cats[0]?.id ?? null : state.selectedCatId
       return { cats, selectedCatId, view: cats.length === 0 ? 'dashboard' : state.view }
     }),
+  openQuickAction: (a) => set({ quickAction: a }),
+  closeQuickAction: () => set({ quickAction: null }),
 }))
 
 export function useSelectedCat(): CatProfile | null {

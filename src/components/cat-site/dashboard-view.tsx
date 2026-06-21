@@ -131,7 +131,7 @@ export function DashboardView() {
                     <div className="flex items-start gap-3">
                       <div className="shrink-0">
                         {d.catAvatar ? (
-                          <img src={d.catAvatar} alt={d.catName} className="h-10 w-10 rounded-full object-cover" />
+                          <img loading="lazy" src={d.catAvatar} alt={d.catName} className="h-10 w-10 rounded-full object-cover" />
                         ) : (
                           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-lg">🐱</span>
                         )}
@@ -142,8 +142,9 @@ export function DashboardView() {
                           {mood && <Badge className={mood.color}>{mood.emoji} {mood.label}</Badge>}
                           <span className="text-xs text-stone-400">{fmtDate(d.date)}</span>
                         </div>
-                        <h3 className="mb-0.5 text-sm font-bold text-stone-700">{d.title}</h3>
-                        <p className="line-clamp-2 text-xs leading-relaxed text-stone-500">{d.content}</p>
+                        <h3 className="mb-0.5 text-sm font-bold text-stone-700 dark:text-stone-200">{d.title}</h3>
+                        <p className="line-clamp-2 text-xs leading-relaxed text-stone-500 dark:text-stone-400">{d.content}</p>
+                        <span className="mt-1 inline-block text-[10px] font-medium text-amber-600 dark:text-amber-400">点击查看 ›</span>
                       </div>
                       <ChevronRight className="h-4 w-4 shrink-0 self-center text-stone-300" />
                     </div>
@@ -179,7 +180,7 @@ export function DashboardView() {
                   >
                     <div className="flex items-center gap-2">
                       {r.catAvatar ? (
-                        <img src={r.catAvatar} alt={r.catName} className="h-7 w-7 rounded-full object-cover" />
+                        <img loading="lazy" src={r.catAvatar} alt={r.catName} className="h-7 w-7 rounded-full object-cover" />
                       ) : (
                         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-sm">🐱</span>
                       )}
@@ -236,7 +237,7 @@ function CatCard({ cat, onClick }: { cat: DashboardData['cats'][number]; onClick
         </div>
         <div className="absolute -bottom-7 left-5">
           {cat.avatar ? (
-            <img src={cat.avatar} alt={cat.name} className="h-16 w-16 rounded-full border-4 border-white object-cover shadow-md" />
+            <img loading="lazy" src={cat.avatar} alt={cat.name} className="h-16 w-16 rounded-full border-4 border-white object-cover shadow-md" />
           ) : (
             <span className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-white bg-amber-200 text-3xl shadow-md">🐱</span>
           )}
