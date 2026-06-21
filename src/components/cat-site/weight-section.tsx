@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Plus, Loader2, Trash2, TrendingUp, Scale } from 'lucide-react'
+import { Plus, Loader2, Trash2, Scale } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -11,22 +11,24 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
+import { useSelectedCatId } from './use-cat-id'
 import { fmtDate, type WeightEntry } from '@/lib/types'
 import { SectionTitle, Loading, Empty } from './diary-section'
 
 export function WeightSection() {
   const { toast } = useToast()
+  const catId = useSelectedCatId()
   const [list, setList] = useState<WeightEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
 
   const load = useCallback(async () => {
+    if (!catId) { setList([]); setLoading(false); return }
     setLoading(true)
-    const res = await fetch('/api/weight')
-    const data = await res.json()
-    setList(data)
+    const res = await fetch(`/api/weight?catId=${catId}`)
+    setList(await res.json())
     setLoading(false)
-  }, [])
+  }, [catId])
 
   useEffect(() => { load() }, [load])
 
@@ -35,6 +37,8 @@ export function WeightSection() {
     load()
     toast({ title: '已删除' })
   }
+
+  if (!catId) return null
 
   const chartData = list.map(w => ({
     date: fmtDate(w.date).slice(5),
@@ -53,7 +57,7 @@ export function WeightSection() {
         <h3 className="flex items-center gap-2 text-lg font-bold text-stone-800">
           <Scale className="h-5 w-5 text-amber-500" /> 体重曲线
         </h3>
-        <AddDialog open={open} setOpen={setOpen} onSaved={() => { load(); toast({ title: '已记录' }) }} />
+        <AddDialog catId={catId} open={open} setOpen={setOpen} onSaved={() => { load(); toast({ title: '已记录' }) }} />
       </div>
 
       {loading ? (
@@ -62,14 +66,12 @@ export function WeightSection() {
         <Empty text="还没有体重记录" />
       ) : (
         <>
-          {/* 统计 */}
           <div className="mb-4 grid grid-cols-3 gap-3">
             <MiniStat label="最新体重" value={latest ? `${latest.weight} kg` : '—'} />
             <MiniStat label="较上次" value={delta === 0 ? '持平' : `${delta > 0 ? '+' : ''}${delta} kg`} tone={delta > 0 ? 'text-rose-500' : delta < 0 ? 'text-emerald-500' : 'text-stone-500'} />
             <MiniStat label="平均体重" value={`${avg} kg`} />
           </div>
 
-          {/* 图表 */}
           <Card className="border-amber-100/60 p-4 shadow-sm">
             <div className="h-56 w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -88,7 +90,6 @@ export function WeightSection() {
             </div>
           </Card>
 
-          {/* 记录列表 */}
           <div className="mt-4 max-h-64 space-y-2 overflow-y-auto pr-1">
             {[...list].reverse().map((w) => (
               <div key={w.id} className="flex items-center justify-between rounded-xl border border-amber-100/60 bg-white/60 px-4 py-2.5">
@@ -120,7 +121,7 @@ function MiniStat({ label, value, tone }: { label: string; value: string; tone?:
   )
 }
 
-function AddDialog({ open, setOpen, onSaved }: { open: boolean; setOpen: (v: boolean) => void; onSaved: () => void }) {
+function AddDialog({ catId, open, setOpen, onSaved }: { catId: string; open: boolean; setOpen: (v: boolean) => void; onSaved: () => void }) {
   const { toast } = useToast()
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
@@ -137,7 +138,7 @@ function AddDialog({ open, setOpen, onSaved }: { open: boolean; setOpen: (v: boo
     try {
       const res = await fetch('/api/weight', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, catId }),
       })
       if (!res.ok) throw new Error('失败')
       setOpen(false)

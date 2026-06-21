@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Sparkles, Wand2, Image as ImageIcon, Eye, Loader2, Trash2, Bot } from 'lucide-react'
+import { Sparkles, Wand2, Eye, Loader2, Bot } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -11,13 +11,16 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
 import { ImageUpload } from './image-upload'
-import { MOOD_MAP, fmtDate, type AIDiaryEntry, type AIArtworkEntry, type ImageCaptionEntry } from '@/lib/types'
+import { useSelectedCatId } from './use-cat-id'
+import { fmtDate, type AIDiaryEntry, type AIArtworkEntry, type ImageCaptionEntry } from '@/lib/types'
 import { SectionTitle, Loading, Empty } from './diary-section'
 
 export function AIPlaySection() {
+  const catId = useSelectedCatId()
+  if (!catId) return null
   return (
     <section id="ai" className="scroll-mt-20">
-      <SectionTitle icon={<Bot className="h-5 w-5" />} title="AI 玩乐实验室" desc="用 AI 给饼饼写日记、画艺术照、看图说话" />
+      <SectionTitle icon={<Bot className="h-5 w-5" />} title="AI 玩乐实验室" desc="用 AI 给猫咪写日记、画艺术照、看图说话" />
       <Tabs defaultValue="diary" className="w-full">
         <TabsList className="grid w-full grid-cols-3 bg-amber-50">
           <TabsTrigger value="diary" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">
@@ -30,16 +33,16 @@ export function AIPlaySection() {
             <Eye className="mr-1 h-4 w-4" /> 看图说话
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="diary" className="mt-4"><AIDiaryPanel /></TabsContent>
-        <TabsContent value="art" className="mt-4"><AIArtworkPanel /></TabsContent>
-        <TabsContent value="caption" className="mt-4"><AICaptionPanel /></TabsContent>
+        <TabsContent value="diary" className="mt-4"><AIDiaryPanel catId={catId} /></TabsContent>
+        <TabsContent value="art" className="mt-4"><AIArtworkPanel catId={catId} /></TabsContent>
+        <TabsContent value="caption" className="mt-4"><AICaptionPanel catId={catId} /></TabsContent>
       </Tabs>
     </section>
   )
 }
 
 /* ============ AI 第一人称日记 ============ */
-function AIDiaryPanel() {
+function AIDiaryPanel({ catId }: { catId: string }) {
   const { toast } = useToast()
   const [list, setList] = useState<AIDiaryEntry[]>([])
   const [loadingList, setLoadingList] = useState(true)
@@ -50,10 +53,10 @@ function AIDiaryPanel() {
 
   const load = useCallback(async () => {
     setLoadingList(true)
-    const res = await fetch('/api/ai/diary')
+    const res = await fetch(`/api/ai/diary?catId=${catId}`)
     setList(await res.json())
     setLoadingList(false)
-  }, [])
+  }, [catId])
 
   useEffect(() => { load() }, [load])
 
@@ -67,7 +70,7 @@ function AIDiaryPanel() {
     try {
       const res = await fetch('/api/ai/diary', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keywords, mood }),
+        body: JSON.stringify({ catId, keywords, mood }),
       })
       if (!res.ok) throw new Error('生成失败')
       const data = await res.json()
@@ -86,7 +89,7 @@ function AIDiaryPanel() {
     <div className="grid gap-4 lg:grid-cols-2">
       <Card className="border-amber-100/60 p-5 shadow-sm">
         <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-stone-700">
-          <Sparkles className="h-4 w-4 text-amber-500" /> 让 AI 用饼饼的口吻写日记
+          <Sparkles className="h-4 w-4 text-amber-500" /> 让 AI 用猫咪的口吻写日记
         </div>
         <div className="space-y-3">
           <div>
@@ -104,13 +107,13 @@ function AIDiaryPanel() {
             </div>
           </div>
           <Button onClick={gen} disabled={generating} className="w-full bg-amber-500 hover:bg-amber-600">
-            {generating ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> 饼饼正在构思…</> : <><Sparkles className="mr-1 h-4 w-4" /> 生成日记</>}
+            {generating ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> 猫咪正在构思…</> : <><Sparkles className="mr-1 h-4 w-4" /> 生成日记</>}
           </Button>
         </div>
         {result && (
           <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/50 p-4">
             <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-amber-700">
-              <span className="text-base">🐾</span> 饼饼今日日记
+              <span className="text-base">🐾</span> 今日日记
             </div>
             <p className="whitespace-pre-wrap text-sm leading-relaxed text-stone-700">{result}</p>
           </div>
@@ -150,7 +153,7 @@ const STYLES = [
   { key: 'watercolor', label: '水彩', emoji: '💧' },
 ]
 
-function AIArtworkPanel() {
+function AIArtworkPanel({ catId }: { catId: string }) {
   const { toast } = useToast()
   const [list, setList] = useState<AIArtworkEntry[]>([])
   const [loadingList, setLoadingList] = useState(true)
@@ -161,10 +164,10 @@ function AIArtworkPanel() {
 
   const load = useCallback(async () => {
     setLoadingList(true)
-    const res = await fetch('/api/ai/artwork')
+    const res = await fetch(`/api/ai/artwork?catId=${catId}`)
     setList(await res.json())
     setLoadingList(false)
-  }, [])
+  }, [catId])
 
   useEffect(() => { load() }, [load])
 
@@ -178,7 +181,7 @@ function AIArtworkPanel() {
     try {
       const res = await fetch('/api/ai/artwork', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, style }),
+        body: JSON.stringify({ catId, prompt, style }),
       })
       if (!res.ok) throw new Error('生成失败')
       const data = await res.json()
@@ -196,7 +199,7 @@ function AIArtworkPanel() {
     <div className="grid gap-4 lg:grid-cols-2">
       <Card className="border-amber-100/60 p-5 shadow-sm">
         <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-stone-700">
-          <Wand2 className="h-4 w-4 text-amber-500" /> 给饼饼生成艺术照
+          <Wand2 className="h-4 w-4 text-amber-500" /> 生成专属艺术照
         </div>
         <div className="space-y-3">
           <div>
@@ -211,7 +214,7 @@ function AIArtworkPanel() {
             </div>
           </div>
           <div>
-            <Label className="mb-1.5 block text-xs text-stone-500">画面描述（饼饼在做什么）</Label>
+            <Label className="mb-1.5 block text-xs text-stone-500">画面描述（在做什么）</Label>
             <Input value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="戴皇冠坐在王座上" />
           </div>
           <Button onClick={gen} disabled={generating} className="w-full bg-amber-500 hover:bg-amber-600">
@@ -252,7 +255,7 @@ function AIArtworkPanel() {
 }
 
 /* ============ 看图说话 ============ */
-function AICaptionPanel() {
+function AICaptionPanel({ catId }: { catId: string }) {
   const { toast } = useToast()
   const [list, setList] = useState<ImageCaptionEntry[]>([])
   const [loadingList, setLoadingList] = useState(true)
@@ -262,16 +265,16 @@ function AICaptionPanel() {
 
   const load = useCallback(async () => {
     setLoadingList(true)
-    const res = await fetch('/api/ai/caption')
+    const res = await fetch(`/api/ai/caption?catId=${catId}`)
     setList(await res.json())
     setLoadingList(false)
-  }, [])
+  }, [catId])
 
   useEffect(() => { load() }, [load])
 
   async function gen() {
     if (!imageUrl) {
-      toast({ title: '请先上传一张饼饼的照片', variant: 'destructive' })
+      toast({ title: '请先上传一张照片', variant: 'destructive' })
       return
     }
     setGenerating(true)
@@ -279,7 +282,7 @@ function AICaptionPanel() {
     try {
       const res = await fetch('/api/ai/caption', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl }),
+        body: JSON.stringify({ catId, imageUrl }),
       })
       if (!res.ok) throw new Error('生成失败')
       const data = await res.json()
@@ -296,7 +299,7 @@ function AICaptionPanel() {
     <div className="grid gap-4 lg:grid-cols-2">
       <Card className="border-amber-100/60 p-5 shadow-sm">
         <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-stone-700">
-          <Eye className="h-4 w-4 text-amber-500" /> AI 猜饼饼在想什么
+          <Eye className="h-4 w-4 text-amber-500" /> AI 猜猫咪在想什么
         </div>
         <div className="space-y-3">
           <div className="flex flex-col items-center gap-3">
@@ -305,16 +308,16 @@ function AICaptionPanel() {
             ) : (
               <div className="flex h-48 w-full items-center justify-center rounded-xl border-2 border-dashed border-amber-200 text-4xl">📸</div>
             )}
-            <ImageUpload onUploaded={(url) => setImageUrl(url)} label="上传一张饼饼的照片" />
+            <ImageUpload onUploaded={(url) => setImageUrl(url)} label="上传一张照片" />
           </div>
           <Button onClick={gen} disabled={generating} className="w-full bg-amber-500 hover:bg-amber-600">
-            {generating ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> AI 正在观察…</> : <><Eye className="mr-1 h-4 w-4" /> 猜猜饼饼在想啥</>}
+            {generating ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> AI 正在观察…</> : <><Eye className="mr-1 h-4 w-4" /> 猜猜在想啥</>}
           </Button>
         </div>
         {result && (
           <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/50 p-4">
             <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-amber-700">
-              <span className="text-base">💭</span> 饼饼的内心独白
+              <span className="text-base">💭</span> 内心独白
             </div>
             <p className="text-sm leading-relaxed text-stone-700">「{result}」</p>
           </div>

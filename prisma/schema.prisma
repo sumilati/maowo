@@ -1,4 +1,4 @@
-// 饼饼的小窝 - 数据库 schema
+// 猫窝 - 数据库 schema（多猫支持）
 
 generator client {
   provider = "prisma-client-js"
@@ -9,10 +9,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 猫咪档案（单条，固定 id）
+// 猫咪档案（可有多只）
 model Cat {
-  id        String   @id @default("default")
-  name      String   @default("饼饼")
+  id        String   @id @default(cuid())
+  name      String
   breed     String?
   gender    String?
   birthday  String?
@@ -21,18 +21,30 @@ model Cat {
   motto     String?
   avatar    String?
   traits    String   @default("[]") // JSON array of strings
-  color     String? // 主色调描述
+  color     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  diaries       Diary[]
+  weightRecords WeightRecord[]
+  healthRecords HealthRecord[]
+  albumPhotos   AlbumPhoto[]
+  milestones    Milestone[]
+  messages      Message[]
+  aiDiaries     AIDiary[]
+  aiArtworks    AIArtwork[]
+  imageCaptions ImageCaption[]
 }
 
 // 成长日记
 model Diary {
   id        String   @id @default(cuid())
+  catId     String
+  cat       Cat      @relation(fields: [catId], references: [id], onDelete: Cascade)
   date      DateTime
   title     String
   content   String
-  mood      String? // happy/sleepy/naughty/cute/grumpy
+  mood      String?
   imageUrl  String?
   createdAt DateTime @default(now())
 }
@@ -40,8 +52,10 @@ model Diary {
 // 体重记录
 model WeightRecord {
   id        String   @id @default(cuid())
+  catId     String
+  cat       Cat      @relation(fields: [catId], references: [id], onDelete: Cascade)
   date      DateTime
-  weight    Float // kg
+  weight    Float
   note      String?
   createdAt DateTime @default(now())
 }
@@ -49,8 +63,10 @@ model WeightRecord {
 // 健康记录（疫苗/驱虫/体检）
 model HealthRecord {
   id          String   @id @default(cuid())
+  catId       String
+  cat         Cat      @relation(fields: [catId], references: [id], onDelete: Cascade)
   date        DateTime
-  type        String // vaccine/deworm/checkup
+  type        String
   title       String
   description String?
   nextDate    DateTime?
@@ -60,35 +76,43 @@ model HealthRecord {
 // 相册
 model AlbumPhoto {
   id        String   @id @default(cuid())
+  catId     String
+  cat       Cat      @relation(fields: [catId], references: [id], onDelete: Cascade)
   url       String
   title     String?
-  tag       String? // sleep/eat/play/daze/naughty
-  source    String   @default("upload") // upload/ai
+  tag       String?
+  source    String   @default("upload")
   createdAt DateTime @default(now())
 }
 
 // 里程碑
 model Milestone {
   id          String   @id @default(cuid())
+  catId       String
+  cat         Cat      @relation(fields: [catId], references: [id], onDelete: Cascade)
   date        DateTime
   title       String
   description String?
-  icon        String? // emoji
+  icon        String?
   createdAt   DateTime @default(now())
 }
 
-// 留言板
+// 留言板（每只猫独立的留言）
 model Message {
   id        String   @id @default(cuid())
+  catId     String
+  cat       Cat      @relation(fields: [catId], references: [id], onDelete: Cascade)
   name      String
   content   String
-  avatar    String? // emoji
+  avatar    String?
   createdAt DateTime @default(now())
 }
 
 // AI 第一人称日记
 model AIDiary {
   id        String   @id @default(cuid())
+  catId     String
+  cat       Cat      @relation(fields: [catId], references: [id], onDelete: Cascade)
   keywords  String
   content   String
   createdAt DateTime @default(now())
@@ -97,6 +121,8 @@ model AIDiary {
 // AI 艺术照
 model AIArtwork {
   id        String   @id @default(cuid())
+  catId     String
+  cat       Cat      @relation(fields: [catId], references: [id], onDelete: Cascade)
   prompt    String
   url       String
   style     String?
@@ -106,6 +132,8 @@ model AIArtwork {
 // 看图说话
 model ImageCaption {
   id        String   @id @default(cuid())
+  catId     String
+  cat       Cat      @relation(fields: [catId], references: [id], onDelete: Cascade)
   imageUrl  String
   caption   String
   createdAt DateTime @default(now())

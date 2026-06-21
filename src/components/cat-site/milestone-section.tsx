@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
+import { useSelectedCatId } from './use-cat-id'
 import { fmtDate, type MilestoneEntry } from '@/lib/types'
 import { SectionTitle, Loading, Empty } from './diary-section'
 
@@ -18,16 +19,18 @@ const ICONS = ['🎂', '🏠', '🛁', '✂️', '🎉', '🏆', '🎈', '🐱',
 
 export function MilestoneSection() {
   const { toast } = useToast()
+  const catId = useSelectedCatId()
   const [list, setList] = useState<MilestoneEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
 
   const load = useCallback(async () => {
+    if (!catId) { setList([]); setLoading(false); return }
     setLoading(true)
-    const res = await fetch('/api/milestones')
+    const res = await fetch(`/api/milestones?catId=${catId}`)
     setList(await res.json())
     setLoading(false)
-  }, [])
+  }, [catId])
 
   useEffect(() => { load() }, [load])
 
@@ -37,11 +40,13 @@ export function MilestoneSection() {
     toast({ title: '已删除' })
   }
 
+  if (!catId) return null
+
   return (
     <section id="milestone" className="scroll-mt-20">
       <div className="flex items-center justify-between">
-        <SectionTitle icon={<Flag className="h-5 w-5" />} title="猫生里程碑" desc="饼饼的重要时刻" />
-        <AddDialog open={open} setOpen={setOpen} onSaved={() => { load(); toast({ title: '已添加' }) }} />
+        <SectionTitle icon={<Flag className="h-5 w-5" />} title="猫生里程碑" desc="重要时刻" />
+        <AddDialog catId={catId} open={open} setOpen={setOpen} onSaved={() => { load(); toast({ title: '已添加' }) }} />
       </div>
 
       {loading ? (
@@ -82,7 +87,7 @@ export function MilestoneSection() {
   )
 }
 
-function AddDialog({ open, setOpen, onSaved }: { open: boolean; setOpen: (v: boolean) => void; onSaved: () => void }) {
+function AddDialog({ catId, open, setOpen, onSaved }: { catId: string; open: boolean; setOpen: (v: boolean) => void; onSaved: () => void }) {
   const { toast } = useToast()
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
@@ -99,7 +104,7 @@ function AddDialog({ open, setOpen, onSaved }: { open: boolean; setOpen: (v: boo
     try {
       const res = await fetch('/api/milestones', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, catId }),
       })
       if (!res.ok) throw new Error('失败')
       setOpen(false)

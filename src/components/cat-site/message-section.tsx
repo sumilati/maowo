@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
+import { useSelectedCatId } from './use-cat-id'
 import { fmtDate, type MessageEntry } from '@/lib/types'
 import { SectionTitle, Loading, Empty } from './diary-section'
 
@@ -15,21 +16,24 @@ const AVATARS = ['😸', '😹', '😻', '😼', '🙀', '🐾', '🐟', '🦴',
 
 export function MessageSection() {
   const { toast } = useToast()
+  const catId = useSelectedCatId()
   const [list, setList] = useState<MessageEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [form, setForm] = useState({ name: '', content: '', avatar: '😸' })
 
   const load = useCallback(async () => {
+    if (!catId) { setList([]); setLoading(false); return }
     setLoading(true)
-    const res = await fetch('/api/messages')
+    const res = await fetch(`/api/messages?catId=${catId}`)
     setList(await res.json())
     setLoading(false)
-  }, [])
+  }, [catId])
 
   useEffect(() => { load() }, [load])
 
   async function send() {
+    if (!catId) return
     if (!form.content.trim()) {
       toast({ title: '说点什么吧', variant: 'destructive' })
       return
@@ -38,7 +42,7 @@ export function MessageSection() {
     try {
       const res = await fetch('/api/messages', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, catId }),
       })
       if (!res.ok) throw new Error('失败')
       setForm(f => ({ ...f, content: '' }))
@@ -56,12 +60,13 @@ export function MessageSection() {
     load()
   }
 
+  if (!catId) return null
+
   return (
     <section id="messages" className="scroll-mt-20">
-      <SectionTitle icon={<MessageCircle className="h-5 w-5" />} title="撸猫留言板" desc="来跟饼饼打个招呼吧" />
+      <SectionTitle icon={<MessageCircle className="h-5 w-5" />} title="撸猫留言板" desc="来跟猫咪打个招呼吧" />
 
       <div className="grid gap-4 lg:grid-cols-5">
-        {/* 留言表单 */}
         <Card className="border-amber-100/60 p-5 shadow-sm lg:col-span-2">
           <div className="space-y-3">
             <div>
@@ -79,8 +84,8 @@ export function MessageSection() {
               </div>
             </div>
             <div>
-              <Label className="mb-1.5 block text-xs text-stone-500">想对饼饼说</Label>
-              <Textarea rows={4} value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))} placeholder="饼饼好可爱呀～" />
+              <Label className="mb-1.5 block text-xs text-stone-500">想说的话</Label>
+              <Textarea rows={4} value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))} placeholder="好可爱呀～" />
             </div>
             <Button onClick={send} disabled={sending} className="w-full bg-amber-500 hover:bg-amber-600">
               {sending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Send className="mr-1 h-4 w-4" />}
@@ -89,7 +94,6 @@ export function MessageSection() {
           </div>
         </Card>
 
-        {/* 留言列表 */}
         <div className="lg:col-span-3">
           {loading ? <Loading /> : list.length === 0 ? <Empty text="还没有留言，快来抢沙发" /> : (
             <div className="max-h-[28rem] space-y-3 overflow-y-auto pr-1">

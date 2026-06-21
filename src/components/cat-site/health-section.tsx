@@ -12,22 +12,24 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
+import { useSelectedCatId } from './use-cat-id'
 import { HEALTH_TYPE_MAP, fmtDate, type HealthEntry } from '@/lib/types'
 import { Loading, Empty } from './diary-section'
 
 export function HealthSection() {
   const { toast } = useToast()
+  const catId = useSelectedCatId()
   const [list, setList] = useState<HealthEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
 
   const load = useCallback(async () => {
+    if (!catId) { setList([]); setLoading(false); return }
     setLoading(true)
-    const res = await fetch('/api/health')
-    const data = await res.json()
-    setList(data)
+    const res = await fetch(`/api/health?catId=${catId}`)
+    setList(await res.json())
     setLoading(false)
-  }, [])
+  }, [catId])
 
   useEffect(() => { load() }, [load])
 
@@ -37,7 +39,8 @@ export function HealthSection() {
     toast({ title: '已删除' })
   }
 
-  // 即将到期/过期的提醒
+  if (!catId) return null
+
   const now = Date.now()
   const reminders = list
     .filter(h => h.nextDate)
@@ -51,14 +54,13 @@ export function HealthSection() {
         <h3 className="flex items-center gap-2 text-lg font-bold text-stone-800">
           <Stethoscope className="h-5 w-5 text-amber-500" /> 健康档案
         </h3>
-        <AddDialog open={open} setOpen={setOpen} onSaved={() => { load(); toast({ title: '已记录' }) }} />
+        <AddDialog catId={catId} open={open} setOpen={setOpen} onSaved={() => { load(); toast({ title: '已记录' }) }} />
       </div>
 
       {loading ? (
         <Loading />
       ) : (
         <>
-          {/* 提醒 */}
           {reminders.length > 0 && (
             <Card className="mb-4 border-amber-200 bg-amber-50/60 p-4 shadow-sm">
               <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-amber-700">
@@ -118,7 +120,7 @@ export function HealthSection() {
   )
 }
 
-function AddDialog({ open, setOpen, onSaved }: { open: boolean; setOpen: (v: boolean) => void; onSaved: () => void }) {
+function AddDialog({ catId, open, setOpen, onSaved }: { catId: string; open: boolean; setOpen: (v: boolean) => void; onSaved: () => void }) {
   const { toast } = useToast()
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
@@ -135,7 +137,7 @@ function AddDialog({ open, setOpen, onSaved }: { open: boolean; setOpen: (v: boo
     try {
       const res = await fetch('/api/health', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, catId }),
       })
       if (!res.ok) throw new Error('失败')
       setOpen(false)

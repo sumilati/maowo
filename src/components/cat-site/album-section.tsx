@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Plus, Loader2, Trash2, Images } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
 } from '@/components/ui/dialog'
@@ -11,11 +10,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { ImageUpload } from './image-upload'
+import { useSelectedCatId } from './use-cat-id'
 import { TAG_MAP, type AlbumEntry } from '@/lib/types'
 import { SectionTitle, Loading } from './diary-section'
 
 export function AlbumSection() {
   const { toast } = useToast()
+  const catId = useSelectedCatId()
   const [list, setList] = useState<AlbumEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
@@ -23,12 +24,12 @@ export function AlbumSection() {
   const [preview, setPreview] = useState<AlbumEntry | null>(null)
 
   const load = useCallback(async () => {
+    if (!catId) { setList([]); setLoading(false); return }
     setLoading(true)
-    const res = await fetch('/api/album')
-    const data = await res.json()
-    setList(data)
+    const res = await fetch(`/api/album?catId=${catId}`)
+    setList(await res.json())
     setLoading(false)
-  }, [])
+  }, [catId])
 
   useEffect(() => { load() }, [load])
 
@@ -38,17 +39,18 @@ export function AlbumSection() {
     toast({ title: '已删除' })
   }
 
+  if (!catId) return null
+
   const filtered = filter === 'all' ? list : list.filter(p => p.tag === filter)
   const tags = ['all', ...Object.keys(TAG_MAP)]
 
   return (
     <section id="album" className="scroll-mt-20">
       <div className="flex items-center justify-between">
-        <SectionTitle icon={<Images className="h-5 w-5" />} title="萌照相册" desc="饼饼的可爱瞬间合集" />
-        <AddDialog open={open} setOpen={setOpen} onSaved={() => { load(); toast({ title: '已添加' }) }} />
+        <SectionTitle icon={<Images className="h-5 w-5" />} title="萌照相册" desc="可爱瞬间合集" />
+        <AddDialog catId={catId} open={open} setOpen={setOpen} onSaved={() => { load(); toast({ title: '已添加' }) }} />
       </div>
 
-      {/* 筛选 */}
       <div className="mb-4 flex flex-wrap gap-1.5">
         {tags.map(t => (
           <button
@@ -102,7 +104,6 @@ export function AlbumSection() {
         </div>
       )}
 
-      {/* 大图预览 */}
       {preview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setPreview(null)}>
           <img src={preview.url} alt="" className="max-h-[90vh] max-w-full rounded-2xl object-contain" />
@@ -113,7 +114,7 @@ export function AlbumSection() {
   )
 }
 
-function AddDialog({ open, setOpen, onSaved }: { open: boolean; setOpen: (v: boolean) => void; onSaved: () => void }) {
+function AddDialog({ catId, open, setOpen, onSaved }: { catId: string; open: boolean; setOpen: (v: boolean) => void; onSaved: () => void }) {
   const { toast } = useToast()
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({ url: '', title: '', tag: 'portrait' })
@@ -127,7 +128,7 @@ function AddDialog({ open, setOpen, onSaved }: { open: boolean; setOpen: (v: boo
     try {
       const res = await fetch('/api/album', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, catId }),
       })
       if (!res.ok) throw new Error('失败')
       setOpen(false)

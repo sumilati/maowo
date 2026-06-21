@@ -21,8 +21,8 @@ export function SiteNav() {
             <Cat className="h-5 w-5" />
           </span>
           <div className="leading-tight">
-            <div className="text-base font-bold text-stone-800">饼饼的小窝</div>
-            <div className="text-[10px] text-stone-500">一只橘猫的成长日记</div>
+            <div className="text-base font-bold text-stone-800">猫窝</div>
+            <div className="text-[10px] text-stone-500">每只猫都有专属的小窝</div>
           </div>
         </a>
         <nav className="flex items-center gap-1 overflow-x-auto scroll-hide">

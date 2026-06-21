@@ -9,7 +9,7 @@ export function SiteFooter() {
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-400/90 text-white">
               <Cat className="h-4 w-4" />
             </span>
-            <span>饼饼的小窝 · 用爱记录每一喵</span>
+            <span>猫窝 · 让每只猫都有自己的小窝</span>
           </div>
           <div className="flex items-center gap-1">
             <span>由铲屎官倾情打造</span>

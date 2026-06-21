@@ -14,17 +14,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "饼饼的小窝 · 一只橘猫的成长日记",
-  description: "记录饼饼的日常、体重、健康、相册，还有 AI 给饼饼写的第一人称日记和艺术照。",
-  keywords: ["猫咪", "饼饼", "宠物日记", "AI", "成长记录"],
+  title: "猫窝 · 每只猫都有专属的小窝",
+  description: "记录每只猫咪的成长日记、体重健康、萌照相册，还能用 AI 给它们写日记、画艺术照。",
+  keywords: ["猫咪", "猫窝", "宠物日记", "AI", "成长记录", "多猫管理"],
   authors: [{ name: "铲屎官" }],
   icons: {
     icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
   },
   openGraph: {
-    title: "饼饼的小窝",
-    description: "一只橘猫的成长日记",
-    siteName: "饼饼的小窝",
+    title: "猫窝",
+    description: "每只猫都有专属的小窝",
+    siteName: "猫窝",
     type: "website",
   },
 };
