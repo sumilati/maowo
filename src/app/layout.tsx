@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ServiceWorkerRegister } from "@/components/sw-register";
 import { SessionProviderWrap } from "@/components/session-provider";
@@ -66,6 +67,7 @@ export default function RootLayout({
           <SessionProviderWrap>
             {children}
             <Toaster />
+            <SonnerToaster position="top-center" richColors closeButton />
             <ServiceWorkerRegister />
           </SessionProviderWrap>
         </ThemeProvider>

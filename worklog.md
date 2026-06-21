@@ -141,3 +141,25 @@ Stage Summary:
 - 顶部显示用户头像菜单可登出
 - lint 通过；Agent Browser 验证：未登录跳login、demo登录进主页看到小河、相册5图全加载、看图说话返回独白、AI生图立即可访问
 - demo 账号: demo@maowo.com / 123456
+
+---
+Task ID: login-fix
+Agent: Z.ai Code (main)
+Task: 修复登录不进去问题
+
+Work Log:
+- 排查发现：NextAuth signIn(redirect:false) 在浏览器环境下 set-cookie 未被正确保存，session 建立失败
+- 根因：fetch 调用默认不带 cookie，需要 credentials:'include' 才能让浏览器接收 set-cookie
+- 改造 login page submit：弃用 signIn，改用手动 fetch /api/auth/csrf + /api/auth/callback/credentials + /api/auth/session 验证，所有 fetch 加 credentials:'include'
+- 错误处理：callback 返回 url 含 error= 时抛错；session 验证无 user 时抛错
+- 加内联 errorMsg 红色提示框（不依赖 toast），确保登录失败一定有可见反馈
+- 登录页加体验账号提示卡片(demo@maowo.com/123456)
+- layout 加 SonnerToaster(position=top-center, richColors)
+- .env 加 AUTH_TRUST_HOST=true 适配网关代理
+- auth.ts 回退自定义 cookies 配置，用 NextAuth 默认
+- lint 通过；验证：错误密码显示"邮箱或密码错误"红框、正确密码登录成功跳主页、新用户注册自动登录进空状态
+
+Stage Summary:
+- 登录/注册完全可用，错误有明确提示
+- demo 账号 demo@maowo.com/123456
+- 修复核心：fetch credentials:'include' + 内联错误提示
