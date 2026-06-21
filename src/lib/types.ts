@@ -112,6 +112,38 @@ export interface ImageCaptionEntry {
   createdAt: string
 }
 
+// 仪表盘聚合数据
+export interface DashboardCat {
+  id: string
+  name: string
+  breed: string | null
+  color: string | null
+  gender: string | null
+  birthday: string | null
+  avatar: string | null
+  motto: string | null
+  neutered: boolean
+  traits: string[]
+  diaryCount: number
+  photoCount: number
+  latestDiary: { id: string; title: string; date: string; mood: string | null } | null
+  latestWeight: { weight: number; date: string } | null
+  reminders: { id: string; title: string; type: string; nextDate: string; daysLeft: number | null }[]
+}
+
+export interface DashboardData {
+  cats: DashboardCat[]
+  stats: { catCount: number; totalDiaries: number; totalPhotos: number; totalMessages: number; totalAiContents: number }
+  recentDiaries: {
+    id: string; catId: string; catName: string; catAvatar: string | null; catColor: string | null
+    title: string; content: string; date: string; mood: string | null
+  }[]
+  reminders: {
+    id: string; catId: string; catName: string; catAvatar: string | null
+    title: string; type: string; nextDate: string; daysLeft: number | null
+  }[]
+}
+
 // 计算年龄
 export function calcAge(birthday: string | null): { years: number; months: number; days: number; totalDays: number } {
   if (!birthday) return { years: 0, months: 0, days: 0, totalDays: 0 }

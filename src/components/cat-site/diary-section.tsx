@@ -33,6 +33,13 @@ export function DiarySection() {
 
   useEffect(() => { load() }, [load])
 
+  // 监听 AI 日记转存等事件，自动刷新
+  useEffect(() => {
+    const handler = () => load()
+    window.addEventListener('diary:changed', handler)
+    return () => window.removeEventListener('diary:changed', handler)
+  }, [load])
+
   async function remove(id: string) {
     if (!confirm('删除这条日记？')) return
     await fetch(`/api/diary?id=${id}`, { method: 'DELETE' })

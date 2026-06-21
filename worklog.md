@@ -23,3 +23,25 @@ Stage Summary:
 - 示例数据仅小河一只，饼饼已清除
 - Agent Browser 验证：切换猫数据隔离正确、添加饼饼成功、删除饼饼级联清理、AI 日记按小河美短设定生成、移动端适配正常、footer 正常
 - 产出文件：schema.prisma、seed.ts、/api/cats、/api/cats/[id]、cat-store.ts、cat-switcher.tsx、cat-site.tsx 及所有重构后的 section
+
+---
+Task ID: dashboard-improvements
+Agent: Z.ai Code (main)
+Task: 新增仪表盘首页（不再一上来进单只猫）+ 主动改进项
+
+Work Log:
+- 新建 /api/dashboard 聚合接口：所有猫概览(含每只猫的日记数/照片数/最新日记/最新体重/近期提醒)、全局统计、近期6条动态时间线、30天内健康提醒汇总
+- cat-store 新增 view 状态('dashboard'|'detail')，selectCat 自动切到 detail，goToDashboard 返回，removeCat 后若无猫回 dashboard
+- 新建 DashboardView 组件：欢迎区+5项全局统计卡片+猫咪卡片墙(每只猫一张富信息卡：头像/品种/座右铭/年龄/体重/距生日/最新日记/日记照片数/提醒角标)+近期动态时间线(可点击进对应猫)+健康提醒汇总(可点击进对应猫)
+- 改造 CatSite：默认 view=dashboard 显示仪表盘；点击猫咪卡片 selectCat 进 detail；detail 顶部有「返回猫窝总览」按钮
+- 改进1：AI 日记一键转存到成长日记——新建 /api/ai/diary/[id]/convert，AI 日记结果区加「转存到日记」按钮，转存后派发 diary:changed 事件，DiarySection 监听自动刷新
+- 改进2：暗色模式——启用 next-themes(已装未用)，新建 ThemeProvider + ThemeToggle(日/月图标)，导航栏加切换按钮，globals.css 补充暗色覆盖(cream背景/stone文字/white背景/amber边框/card/输入框/dialog/渐变hero)
+- 改进3：健康提醒过滤优化——过期超过7天的不再显示在"近期提醒"，避免示例数据长期显示"过期几百天"
+- lint 通过；Agent Browser 验证：仪表盘正常、点卡片进详情、返回仪表盘、暗色切换、AI日记生成+转存自动刷新日记区、移动端适配
+
+Stage Summary:
+- 首页改为仪表盘总览，点猫咪进专属小窝，体验更合理
+- 打通 AI 日记 → 成长日记 数据流（一键转存+自动刷新）
+- 暗色模式完整可用
+- 提醒逻辑更合理
+- 产出：/api/dashboard、/api/ai/diary/[id]/convert、dashboard-view.tsx、theme-provider.tsx、theme-toggle.tsx，更新 cat-store/cat-site/diary-section/ai-play-section/health-section/site-nav/globals.css/layout

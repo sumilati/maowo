@@ -45,7 +45,7 @@ export function HealthSection() {
   const reminders = list
     .filter(h => h.nextDate)
     .map(h => ({ ...h, daysLeft: Math.ceil((new Date(h.nextDate!).getTime() - now) / 86400000) }))
-    .filter(h => h.daysLeft <= 30)
+    .filter(h => h.daysLeft <= 30 && h.daysLeft >= -7)
     .sort((a, b) => a.daysLeft - b.daysLeft)
 
   return (

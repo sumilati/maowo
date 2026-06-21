@@ -1,6 +1,7 @@
 'use client'
 
 import { Cat } from 'lucide-react'
+import { ThemeToggle } from './theme-toggle'
 
 const NAV_ITEMS = [
   { id: 'home', label: '小窝' },
@@ -30,11 +31,12 @@ export function SiteNav() {
             <a
               key={item.id}
               href={`#${item.id}`}
-              className="whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium text-stone-600 transition-colors hover:bg-amber-100 hover:text-amber-700"
+              className="whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium text-stone-600 transition-colors hover:bg-amber-100 hover:text-amber-700 dark:text-stone-300 dark:hover:bg-amber-900/30 dark:hover:text-amber-300"
             >
               {item.label}
             </a>
           ))}
+          <ThemeToggle />
         </nav>
       </div>
     </header>

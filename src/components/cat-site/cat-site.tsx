@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect } from 'react'
-import { Loader2, Cat as CatIcon } from 'lucide-react'
+import { Loader2, Cat as CatIcon, ArrowLeft } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { SiteNav } from './site-nav'
 import { SiteFooter } from './site-footer'
+import { DashboardView } from './dashboard-view'
 import { HeroSection } from './hero-section'
 import { DiarySection } from './diary-section'
 import { WeightSection } from './weight-section'
@@ -12,12 +14,11 @@ import { AlbumSection } from './album-section'
 import { AIPlaySection } from './ai-play-section'
 import { MilestoneSection } from './milestone-section'
 import { MessageSection } from './message-section'
-import { CatSwitcher } from './cat-switcher'
 import { useCatStore } from '@/lib/cat-store'
 import { HeartPulse } from 'lucide-react'
 
 export function CatSite() {
-  const { cats, loadingCats, setCats } = useCatStore()
+  const { cats, loadingCats, view, selectedCatId, setCats, goToDashboard, selectCat } = useCatStore()
 
   useEffect(() => {
     fetch('/api/cats')
@@ -34,7 +35,7 @@ export function CatSite() {
     )
   }
 
-  // 无猫：引导添加第一只
+  // 无猫：引导添加
   if (cats.length === 0) {
     return (
       <div className="flex min-h-screen flex-col bg-cream">
@@ -50,9 +51,7 @@ export function CatSite() {
           </p>
           <div className="rounded-xl border border-amber-200 bg-white/70 px-6 py-4">
             <p className="mb-3 text-sm text-stone-600">点击顶部的「添加猫咪」按钮开始</p>
-            <div className="flex justify-center">
-              <CatSwitcher />
-            </div>
+            <EmptyAddButton onCreated={(c) => selectCat(c.id)} />
           </div>
         </main>
         <SiteFooter />
@@ -60,10 +59,30 @@ export function CatSite() {
     )
   }
 
+  // 仪表盘视图
+  if (view === 'dashboard' || !selectedCatId) {
+    return (
+      <div className="flex min-h-screen flex-col bg-cream">
+        <SiteNav />
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
+          <DashboardView />
+        </main>
+        <SiteFooter />
+      </div>
+    )
+  }
+
+  // 猫咪详情视图
   return (
     <div className="flex min-h-screen flex-col bg-cream">
       <SiteNav />
       <main className="mx-auto w-full max-w-6xl flex-1 space-y-16 px-4 py-8 sm:px-6 sm:py-10">
+        {/* 返回仪表盘 */}
+        <div>
+          <Button variant="ghost" size="sm" onClick={goToDashboard} className="text-stone-500 hover:bg-amber-50 hover:text-amber-700">
+            <ArrowLeft className="mr-1 h-4 w-4" /> 返回猫窝总览
+          </Button>
+        </div>
         <HeroSection />
         <DiarySection />
 
@@ -89,6 +108,16 @@ export function CatSite() {
         <MessageSection />
       </main>
       <SiteFooter />
+    </div>
+  )
+}
+
+// 空状态用的添加按钮（简化版，只触发 CatSwitcher 里的添加）
+import { CatSwitcher } from './cat-switcher'
+function EmptyAddButton({ onCreated }: { onCreated: (cat: { id: string }) => void }) {
+  return (
+    <div className="flex justify-center">
+      <CatSwitcher />
     </div>
   )
 }

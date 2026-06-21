@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Sparkles, Wand2, Eye, Loader2, Bot } from 'lucide-react'
+import { Sparkles, Wand2, Eye, Loader2, Bot, BookPlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -50,6 +50,7 @@ function AIDiaryPanel({ catId }: { catId: string }) {
   const [keywords, setKeywords] = useState('')
   const [mood, setMood] = useState('傲娇又可爱')
   const [result, setResult] = useState<string>('')
+  const [resultId, setResultId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoadingList(true)
@@ -67,6 +68,7 @@ function AIDiaryPanel({ catId }: { catId: string }) {
     }
     setGenerating(true)
     setResult('')
+    setResultId(null)
     try {
       const res = await fetch('/api/ai/diary', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -75,6 +77,7 @@ function AIDiaryPanel({ catId }: { catId: string }) {
       if (!res.ok) throw new Error('生成失败')
       const data = await res.json()
       setResult(data.content)
+      setResultId(data.id)
       load()
     } catch (e) {
       toast({ title: '生成失败', description: (e as Error).message, variant: 'destructive' })
@@ -112,8 +115,30 @@ function AIDiaryPanel({ catId }: { catId: string }) {
         </div>
         {result && (
           <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/50 p-4">
-            <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-amber-700">
-              <span className="text-base">🐾</span> 今日日记
+            <div className="mb-2 flex items-center justify-between gap-1.5">
+              <span className="flex items-center gap-1.5 text-xs font-medium text-amber-700">
+                <span className="text-base">🐾</span> 今日日记
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 border-amber-200 px-2 text-xs text-amber-700 hover:bg-amber-100"
+                disabled={!resultId}
+                onClick={async () => {
+                  if (!resultId) return
+                  try {
+                    const res = await fetch(`/api/ai/diary/${resultId}/convert`, { method: 'POST' })
+                    if (!res.ok) throw new Error('转存失败')
+                    toast({ title: '已转存到成长日记', description: '已自动添加到成长日记区' })
+                    // 通知日记区刷新
+                    window.dispatchEvent(new CustomEvent('diary:changed'))
+                  } catch {
+                    toast({ title: '转存失败', variant: 'destructive' })
+                  }
+                }}
+              >
+                <BookPlus className="mr-1 h-3 w-3" /> 转存到日记
+              </Button>
             </div>
             <p className="whitespace-pre-wrap text-sm leading-relaxed text-stone-700">{result}</p>
           </div>
