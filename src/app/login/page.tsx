@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Cat, Loader2, Mail, Lock, User } from 'lucide-react'
+import { Cat, Loader2, Mail, Lock, User, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,6 +15,7 @@ function LoginForm() {
   const search = useSearchParams()
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
   const [form, setForm] = useState({ email: '', password: '', name: '' })
   const [errorMsg, setErrorMsg] = useState('')
 
@@ -66,11 +67,10 @@ function LoginForm() {
       if (!sess?.user) {
         throw new Error('登录失败，请重试')
       }
-      toast.success('登录成功，正在跳转…')
-      setTimeout(() => {
-        router.push('/')
-        router.refresh()
-      }, 200)
+      toast.success('登录成功')
+      setSuccess(true)
+      router.push('/')
+      router.refresh()
     } catch (err) {
       setErrorMsg((err as Error).message)
       toast.error('登录失败', { description: (err as Error).message })
@@ -154,9 +154,9 @@ function LoginForm() {
               {errorMsg}
             </div>
           )}
-          <Button type="submit" disabled={loading} className="w-full bg-amber-500 hover:bg-amber-600">
-            {loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}
-            {mode === 'login' ? '登录' : '注册并登录'}
+          <Button type="submit" disabled={loading || success} className={`w-full transition-colors ${success ? 'bg-emerald-500 hover:bg-emerald-500' : 'bg-amber-500 hover:bg-amber-600'}`}>
+            {success ? <CheckCircle2 className="mr-1 h-4 w-4" /> : loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}
+            {success ? '登录成功' : mode === 'login' ? '登录' : '注册并登录'}
           </Button>
         </form>
 
