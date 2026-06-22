@@ -35,7 +35,7 @@ export function CatSwitcher() {
             }`}
           >
             {c.avatar ? (
-              <img loading="lazy" src={c.avatar} alt={c.name} className="h-8 w-8 rounded-full object-cover" />
+              <img loading="lazy" src={c.avatar} alt={c.name} className="h-8 w-8 rounded-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
             ) : (
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-base">🐱</span>
             )}
@@ -214,7 +214,7 @@ function CatForm({ form, setForm }: { form: {
     <div className="grid gap-4 py-2">
       <div className="flex items-center gap-4">
         <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-amber-100 bg-amber-50">
-          {form.avatar ? <img loading="lazy" src={form.avatar} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-2xl">🐱</div>}
+          {form.avatar ? <img loading="lazy" src={form.avatar} alt="" className="h-full w-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} /> : <div className="flex h-full w-full items-center justify-center text-2xl">🐱</div>}
         </div>
         <ImageUpload onUploaded={(url) => setForm((f: any) => ({ ...f, avatar: url }))} label="上传头像" />
       </div>

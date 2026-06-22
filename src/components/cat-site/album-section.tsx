@@ -82,7 +82,7 @@ export function AlbumSection() {
             const tag = p.tag ? TAG_MAP[p.tag] : null
             return (
               <div key={p.id} className="group relative break-inside-avoid overflow-hidden rounded-2xl shadow-sm">
-                <img loading="lazy" src={p.url} alt={p.title || ''} className="w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                <img loading="lazy" src={p.url} alt={p.title || ''} className="w-full object-cover transition-transform duration-300 group-hover:scale-105" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                 {(p.title || tag) && (
                   <div className="absolute bottom-0 left-0 right-0 p-2 text-white opacity-0 transition-opacity group-hover:opacity-100">
@@ -105,7 +105,7 @@ export function AlbumSection() {
 
       {preview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setPreview(null)}>
-          <img loading="lazy" src={preview.url} alt="" className="max-h-[90vh] max-w-full rounded-2xl object-contain" />
+          <img loading="lazy" src={preview.url} alt="" className="max-h-[90vh] max-w-full rounded-2xl object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
           <button className="absolute right-4 top-4 rounded-full bg-white/90 p-2 text-stone-700">✕</button>
         </div>
       )}

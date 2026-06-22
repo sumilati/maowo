@@ -256,7 +256,7 @@ function AIArtworkPanel({ catId }: { catId: string }) {
         )}
         {result && !generating && (
           <div className="mt-4">
-            <img loading="lazy" src={result.url} alt={result.prompt} className="w-full rounded-xl shadow-md" />
+            <img loading="lazy" src={result.url} alt={result.prompt} className="w-full rounded-xl shadow-md" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
             <p className="mt-1.5 text-center text-xs text-stone-400">「{result.prompt}」· 已自动加入相册</p>
           </div>
         )}
@@ -268,7 +268,7 @@ function AIArtworkPanel({ catId }: { catId: string }) {
           <div className="grid max-h-96 grid-cols-2 gap-2 overflow-y-auto pr-1">
             {list.map(a => (
               <div key={a.id} className="relative overflow-hidden rounded-lg">
-                <img loading="lazy" src={a.url} alt={a.prompt} className="aspect-square w-full object-cover" />
+                <img loading="lazy" src={a.url} alt={a.prompt} className="aspect-square w-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
                 <span className="absolute right-1 top-1 rounded-full bg-purple-500/90 px-1.5 py-0.5 text-[9px] text-white">{STYLES.find(s => s.key === a.style)?.label || 'AI'}</span>
               </div>
             ))}
@@ -329,7 +329,7 @@ function AICaptionPanel({ catId }: { catId: string }) {
         <div className="space-y-3">
           <div className="flex flex-col items-center gap-3">
             {imageUrl ? (
-              <img loading="lazy" src={imageUrl} alt="" className="h-48 w-full rounded-xl object-cover" />
+              <img loading="lazy" src={imageUrl} alt="" className="h-48 w-full rounded-xl object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
             ) : (
               <div className="flex h-48 w-full items-center justify-center rounded-xl border-2 border-dashed border-amber-200 text-4xl">📸</div>
             )}
@@ -355,7 +355,7 @@ function AICaptionPanel({ catId }: { catId: string }) {
           <div className="max-h-96 space-y-3 overflow-y-auto pr-1">
             {list.map(c => (
               <div key={c.id} className="flex gap-3 rounded-xl border border-amber-100/60 bg-white/60 p-3">
-                <img loading="lazy" src={c.imageUrl} alt="" className="h-16 w-16 shrink-0 rounded-lg object-cover" />
+                <img loading="lazy" src={c.imageUrl} alt="" className="h-16 w-16 shrink-0 rounded-lg object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
                 <div className="min-w-0">
                   <p className="text-sm leading-relaxed text-stone-700">「{c.caption}」</p>
                   <span className="text-xs text-stone-400">{fmtDate(c.createdAt)}</span>

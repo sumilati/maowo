@@ -36,7 +36,7 @@ async function main() {
       neutered: true,
       bio: '一只活泼好动的银虎斑美短，好奇心旺盛，最爱追逗猫棒和趴在窗台看鸟。嗓门大，话多，干饭积极，偶尔拆家。',
       motto: '世界那么大，本喵都要瞅瞅',
-      avatar: '/api/uploads/xiaohe-avatar.png',
+      avatar: '',
       color: '银虎斑',
       traits: JSON.stringify(['好奇', '活泼', '爱说话', '追光少年', '黏人']),
     },
@@ -44,9 +44,9 @@ async function main() {
   const cid = xiaohe.id
 
   const diaries = [
-    { date: new Date('2024-11-01'), title: '追到了逗猫棒', content: '今天铲屎官新买了个羽毛逗猫棒，我扑了半天终于按住了。那个羽毛在我爪下乱抖的样子真是有趣，本喵玩到累瘫。', mood: 'happy', imageUrl: '/api/uploads/xiaohe-play.png' },
-    { date: new Date('2024-11-10'), title: '窗台观鸟日记', content: '今天窗台来了三只麻雀，我在玻璃后面 chirp 了半天，喉咙都哑了。铲屎官笑我，哼，他不懂狩猎的乐趣。', mood: 'curious', imageUrl: '/api/uploads/xiaohe-daze.png' },
-    { date: new Date('2024-11-15'), title: '干饭第一名', content: '今天的罐头是鸡肉味的，本喵三口就消灭干净。铲屎官说该控制体重了，我才不听，饿了就喵给他听。', mood: 'happy', imageUrl: '/api/uploads/xiaohe-eat.png' },
+    { date: new Date('2024-11-01'), title: '追到了逗猫棒', content: '今天铲屎官新买了个羽毛逗猫棒，我扑了半天终于按住了。那个羽毛在我爪下乱抖的样子真是有趣，本喵玩到累瘫。', mood: 'happy', imageUrl: '' },
+    { date: new Date('2024-11-10'), title: '窗台观鸟日记', content: '今天窗台来了三只麻雀，我在玻璃后面 chirp 了半天，喉咙都哑了。铲屎官笑我，哼，他不懂狩猎的乐趣。', mood: 'curious', imageUrl: '' },
+    { date: new Date('2024-11-15'), title: '干饭第一名', content: '今天的罐头是鸡肉味的，本喵三口就消灭干净。铲屎官说该控制体重了，我才不听，饿了就喵给他听。', mood: 'happy', imageUrl: '' },
   ]
   for (const d of diaries) await db.diary.create({ data: { ...d, catId: cid } })
 
@@ -68,11 +68,11 @@ async function main() {
   for (const h of healths) await db.healthRecord.create({ data: { ...h, catId: cid, date: new Date(h.date) } })
 
   const photos = [
-    { url: '/api/uploads/xiaohe-avatar.png', title: '本喵的盛世美颜', tag: 'portrait' },
-    { url: '/api/uploads/xiaohe-sleep.png', title: '睡到打呼', tag: 'sleep' },
-    { url: '/api/uploads/xiaohe-eat.png', title: '干饭中勿扰', tag: 'eat' },
-    { url: '/api/uploads/xiaohe-play.png', title: '逗猫棒大战', tag: 'play' },
-    { url: '/api/uploads/xiaohe-daze.png', title: '窗台思考猫生', tag: 'daze' },
+    { url: '', title: '本喵的盛世美颜', tag: 'portrait' },
+    { url: '', title: '睡到打呼', tag: 'sleep' },
+    { url: '', title: '干饭中勿扰', tag: 'eat' },
+    { url: '', title: '逗猫棒大战', tag: 'play' },
+    { url: '', title: '窗台思考猫生', tag: 'daze' },
   ]
   for (const p of photos) await db.albumPhoto.create({ data: { ...p, catId: cid } })
 

@@ -35,6 +35,7 @@ export function HeroSection() {
                 src={cat.avatar}
                 alt={cat.name}
                 className="relative h-32 w-32 rounded-full border-4 border-white object-cover shadow-lg sm:h-40 sm:w-40"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
               />
             ) : (
               <div className="relative flex h-32 w-32 items-center justify-center rounded-full border-4 border-white bg-amber-200 text-5xl shadow-lg sm:h-40 sm:w-40">

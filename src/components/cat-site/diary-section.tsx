@@ -83,7 +83,7 @@ export function DiarySection() {
                 <h3 className="mb-1 text-lg font-bold text-stone-800">{d.title}</h3>
                 <p className="whitespace-pre-wrap text-sm leading-relaxed text-stone-600">{d.content}</p>
                 {d.imageUrl && (
-                  <img loading="lazy" src={d.imageUrl} alt={d.title} className="mt-3 max-h-64 rounded-xl object-cover shadow-sm" />
+                  <img loading="lazy" src={d.imageUrl} alt={d.title} className="mt-3 max-h-64 rounded-xl object-cover shadow-sm" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
                 )}
               </Card>
             )

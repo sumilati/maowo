@@ -131,7 +131,7 @@ export function DashboardView() {
                     <div className="flex items-start gap-3">
                       <div className="shrink-0">
                         {d.catAvatar ? (
-                          <img loading="lazy" src={d.catAvatar} alt={d.catName} className="h-10 w-10 rounded-full object-cover" />
+                           <img loading="lazy" src={d.catAvatar} alt={d.catName} className="h-10 w-10 rounded-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
                         ) : (
                           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-lg">🐱</span>
                         )}
@@ -180,7 +180,7 @@ export function DashboardView() {
                   >
                     <div className="flex items-center gap-2">
                       {r.catAvatar ? (
-                        <img loading="lazy" src={r.catAvatar} alt={r.catName} className="h-7 w-7 rounded-full object-cover" />
+                        <img loading="lazy" src={r.catAvatar} alt={r.catName} className="h-7 w-7 rounded-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
                       ) : (
                         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-sm">🐱</span>
                       )}
@@ -237,7 +237,7 @@ function CatCard({ cat, onClick }: { cat: DashboardData['cats'][number]; onClick
         </div>
         <div className="absolute -bottom-7 left-5">
           {cat.avatar ? (
-            <img loading="lazy" src={cat.avatar} alt={cat.name} className="h-16 w-16 rounded-full border-4 border-white object-cover shadow-md" />
+            <img loading="lazy" src={cat.avatar} alt={cat.name} className="h-16 w-16 rounded-full border-4 border-white object-cover shadow-md" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
           ) : (
             <span className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-white bg-amber-200 text-3xl shadow-md">🐱</span>
           )}
