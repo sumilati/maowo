@@ -26,6 +26,7 @@ export async function llmChat(systemPrompt: string, userMessage: string): Promis
 export async function vlmChat(prompt: string, imageUrl: string): Promise<string> {
   const zai = await getZAI()
   const response = await zai.chat.completions.createVision({
+    model: '',
     messages: [
       {
         role: 'user',

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import fs from 'node:fs'
-import path from 'node:path'
+import { put } from '@vercel/blob'
 import { requireUserId } from '@/lib/session'
 
 export async function POST(req: NextRequest) {
@@ -22,17 +21,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '图片不能超过 8MB' }, { status: 400 })
     }
 
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
-    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true })
-
     const ext = file.name.split('.').pop()?.toLowerCase() || 'png'
-    const filename = `upload_${Date.now()}.${ext}`
-    const filepath = path.join(uploadsDir, filename)
+    const filename = `uploads/upload_${Date.now()}.${ext}`
 
-    const buffer = Buffer.from(await file.arrayBuffer())
-    fs.writeFileSync(filepath, buffer)
+    const blob = await put(filename, file, {
+      access: 'public',
+      contentType: file.type,
+    })
 
-    return NextResponse.json({ url: `/api/uploads/${filename}` })
+    return NextResponse.json({ url: blob.url })
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 })
   }

@@ -18,20 +18,24 @@ export async function POST(req: NextRequest) {
     const cat = await db.cat.findUnique({ where: { id: catId } })
     if (!cat) return NextResponse.json({ error: '猫咪不存在' }, { status: 404 })
 
-    // 把本地图片读成 base64 data URL 传给 VLM
     let vlmImageUrl = imageUrl
-    const localPath = imageUrl.startsWith('/api/uploads/')
-      ? imageUrl.replace('/api/uploads/', '')
-      : imageUrl.startsWith('/uploads/') ? imageUrl.replace('/uploads/', '') : null
-    if (localPath) {
-      try {
-        const filePath = path.join(process.cwd(), 'public', 'uploads', localPath)
-        const buffer = fs.readFileSync(filePath)
-        const ext = path.extname(filePath).slice(1).toLowerCase() || 'png'
-        const mime = ext === 'jpg' ? 'jpeg' : ext
-        vlmImageUrl = `data:image/${mime};base64,${buffer.toString('base64')}`
-      } catch {
-        return NextResponse.json({ error: '图片文件读取失败' }, { status: 400 })
+
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      vlmImageUrl = imageUrl
+    } else {
+      const localPath = imageUrl.startsWith('/api/uploads/')
+        ? imageUrl.replace('/api/uploads/', '')
+        : imageUrl.startsWith('/uploads/') ? imageUrl.replace('/uploads/', '') : null
+      if (localPath) {
+        try {
+          const filePath = path.join(process.cwd(), 'public', 'uploads', localPath)
+          const buffer = fs.readFileSync(filePath)
+          const ext = path.extname(filePath).slice(1).toLowerCase() || 'png'
+          const mime = ext === 'jpg' ? 'jpeg' : ext
+          vlmImageUrl = `data:image/${mime};base64,${buffer.toString('base64')}`
+        } catch {
+          return NextResponse.json({ error: '图片文件读取失败' }, { status: 400 })
+        }
       }
     }
 

@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { generateImageBase64 } from '@/lib/zai'
 import { ownCat } from '@/lib/own-cat'
-import fs from 'node:fs'
-import path from 'node:path'
+import { put } from '@vercel/blob'
 
 const STYLE_PRESETS: Record<string, string> = {
   oil: 'oil painting style, brushstrokes visible, rich colors, classical art',
@@ -56,16 +55,17 @@ export async function POST(req: NextRequest) {
     const fullPrompt = `${subject}, ${userPrompt}, ${styleSuffix}, high quality, detailed, adorable, centered composition`
     const base64 = await generateImageBase64(fullPrompt, '1024x1024')
 
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
-    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true })
-    const filename = `artwork_${Date.now()}.png`
-    fs.writeFileSync(path.join(uploadsDir, filename), Buffer.from(base64, 'base64'))
-    const url = `/api/uploads/${filename}`
+    const filename = `uploads/artwork_${Date.now()}.png`
+    const buffer = Buffer.from(base64, 'base64')
+    const blob = await put(filename, buffer, {
+      access: 'public',
+      contentType: 'image/png',
+    })
 
-    const saved = await db.aIArtwork.create({ data: { catId, prompt: userPrompt, url, style } })
-    await db.albumPhoto.create({ data: { catId, url, title: userPrompt.slice(0, 20), tag: 'portrait', source: 'ai' } })
+    const saved = await db.aIArtwork.create({ data: { catId, prompt: userPrompt, url: blob.url, style } })
+    await db.albumPhoto.create({ data: { catId, url: blob.url, title: userPrompt.slice(0, 20), tag: 'portrait', source: 'ai' } })
 
-    return NextResponse.json({ id: saved.id, url, prompt: userPrompt, style })
+    return NextResponse.json({ id: saved.id, url: blob.url, prompt: userPrompt, style })
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 })
   }
